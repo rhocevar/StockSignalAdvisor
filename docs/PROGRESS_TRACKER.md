@@ -38,10 +38,10 @@
 - [x] Unit tests for technical calculations (41 new tests, 77 total)
 
 ### Day 6 — Fundamentals Tool
-- [ ] FundamentalMetrics Pydantic model
-- [ ] `get_fundamental_metrics()` implementation
-- [ ] `interpret_fundamentals()` scoring logic
-- [ ] Unit tests for fundamentals
+- [x] FundamentalMetrics Pydantic model (reused existing `FundamentalAnalysis` + added `FundamentalInterpretation`)
+- [x] `get_fundamental_metrics()` implementation
+- [x] `interpret_fundamentals()` scoring logic
+- [x] Unit tests for fundamentals (28 new tests, 105 total)
 
 ### Day 7 — News Integration
 - [ ] NewsAPI wrapper (`tools/news_fetcher.py`)
@@ -138,10 +138,10 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Week 1: Foundation & Abstractions | In Progress | 21/24 |
+| Week 1: Foundation & Abstractions | In Progress | 25/28 |
 | Week 2: AI Integration | Not Started | 0/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **21/64** |
+| **Total** | | **25/68** |
 
 ---
 

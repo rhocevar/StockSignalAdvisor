@@ -71,6 +71,11 @@ class FundamentalAnalysis(BaseModel):
     insights: list[str] = []
 
 
+class FundamentalInterpretation(BaseModel):
+    score: float  # 0.0 (bearish) to 1.0 (bullish)
+    insights: list[str] = []
+
+
 class SentimentAnalysis(BaseModel):
     overall: Optional[SentimentType] = None
     score: Optional[float] = None

@@ -29,8 +29,9 @@ backend/app/       → FastAPI application
   providers/       → LLM and vector store abstractions (NEVER bypass these)
     llm/           → base.py, openai.py, anthropic.py, factory.py
     vectorstore/   → base.py, pinecone.py, factory.py
-  agents/          → LangChain orchestrator and tools
-  rag/             → LlamaIndex RAG pipeline
+  agents/tools/    → Data fetching + calculations
+  agents/          → LangChain orchestrator (Day 11+)
+  rag/             → LlamaIndex RAG pipeline (Day 10+)
   models/          → domain.py, request.py, response.py
   services/        → Caching and shared services
 backend/tests/     → pytest tests (conftest.py for shared fixtures)
@@ -39,6 +40,18 @@ scripts/           → Utility scripts
 docs/              → Documentation
 ```
 
+## Current Architecture
+
+| Module | Purpose | Key Files |
+|--------|---------|-----------|
+| `models/` | Pydantic domain, request & response models | `domain.py` (TechnicalAnalysis, FundamentalAnalysis, PriceData, etc.), `request.py`, `response.py` |
+| `providers/llm/` | Swappable LLM abstraction (ABC + factory) | `base.py` (ChatMessage, LLMProvider), `openai.py`, `anthropic.py`, `factory.py` |
+| `providers/vectorstore/` | Swappable vector store abstraction | `base.py` (Document, VectorStoreProvider), `pinecone.py`, `factory.py` |
+| `agents/tools/` | Data fetching + indicator calculations | `stock_data.py` (yfinance wrapper), `technical.py` (RSI, MACD, SMA), `fundamentals.py` (valuation, profitability, growth, health scoring) |
+| `api/routes/` | FastAPI endpoints | `health.py` (GET /health), `analysis.py` (POST /analyze — stub until Day 12) |
+| `enums.py` | Central enum definitions | SignalType, MacdSignal, TrendDirection, VolumeTrend, provider types, etc. |
+| `config.py` | Environment config | pydantic-settings, auto-loads `.env` |
+
 ## Coding Conventions
 
 ### Backend (Python)
@@ -46,6 +59,7 @@ docs/              → Documentation
 - Pydantic v2 for all data models
 - Type hints on all function signatures
 - **Enums for all string constants** — defined in `app/enums.py`, never use magic strings
+- **Centralized field mappings** — external API keys mapped via module-level constants (e.g. `_YFINANCE_FIELD_MAP` in `fundamentals.py`), not inline strings
 - Use `providers/` abstraction layer — never import openai/anthropic/pinecone directly in business logic
 - FastAPI dependency injection for providers
 - All endpoints under `/api/v1/` prefix
