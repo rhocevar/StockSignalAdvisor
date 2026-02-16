@@ -7,7 +7,7 @@ Core principles:
 - When suggesting edits, please keep your implementation concise.
 
 Workflow guidelines:
-- After completing implementation, please update README.md, CLAUDE.md, and other documentation as needed.
+- After completing implementation, please update README.md, CLAUDE.md, PROGRESS_TRACKER.md and other documentation as needed.
 - After implementing changes to API endpoints, please update Bruno collections accordingly.
 
 Implementation guidelines:
