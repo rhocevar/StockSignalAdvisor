@@ -20,10 +20,10 @@
 - [x] Provider factory pattern (`factory.py` for both)
 
 ### Day 3 — OpenAI + Pinecone Providers
-- [ ] OpenAI LLM provider implementation
-- [ ] Anthropic LLM provider implementation (stub)
-- [ ] Pinecone vector store provider implementation
-- [ ] Provider abstraction unit tests
+- [x] OpenAI LLM provider implementation
+- [x] Anthropic LLM provider implementation (stub)
+- [x] Pinecone vector store provider implementation
+- [x] Provider abstraction unit tests (36 tests, fully mocked)
 
 ### Day 4 — Backend Scaffold
 - [ ] FastAPI app entry point (`main.py`)
@@ -138,10 +138,10 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Week 1: Foundation & Abstractions | In Progress | 9/24 |
+| Week 1: Foundation & Abstractions | In Progress | 13/24 |
 | Week 2: AI Integration | Not Started | 0/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **9/64** |
+| **Total** | | **13/64** |
 
 ---
 
