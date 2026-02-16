@@ -1,5 +1,8 @@
+name: stock-signal-advisor
+
 services:
   backend:
+    container_name: ssa-api
     build:
       context: ./backend
       dockerfile: Dockerfile

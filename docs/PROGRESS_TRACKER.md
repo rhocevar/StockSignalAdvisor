@@ -15,9 +15,9 @@
 - [x] README.md scaffolded
 
 ### Day 2 — Provider Abstractions
-- [ ] LLM provider base class (`providers/llm/base.py`)
-- [ ] Vector store provider base class (`providers/vectorstore/base.py`)
-- [ ] Provider factory pattern (`factory.py` for both)
+- [x] LLM provider base class (`providers/llm/base.py`)
+- [x] Vector store provider base class (`providers/vectorstore/base.py`)
+- [x] Provider factory pattern (`factory.py` for both)
 
 ### Day 3 — OpenAI + Pinecone Providers
 - [ ] OpenAI LLM provider implementation
@@ -138,10 +138,10 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Week 1: Foundation & Abstractions | In Progress | 6/24 |
+| Week 1: Foundation & Abstractions | In Progress | 9/24 |
 | Week 2: AI Integration | Not Started | 0/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **6/64** |
+| **Total** | | **9/64** |
 
 ---
 
