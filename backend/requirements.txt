@@ -1,0 +1,31 @@
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# AI/ML
+langchain==0.1.4
+langchain-openai==0.0.5
+langchain-anthropic==0.0.2
+llama-index==0.9.30
+openai==1.10.0
+anthropic==0.18.0
+
+# Vector Store
+pinecone-client==3.0.2
+
+# Data Sources
+yfinance==0.2.35
+requests==2.31.0
+
+# Caching
+cachetools==5.3.2
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0
+
+# Development
+python-dotenv==1.0.0

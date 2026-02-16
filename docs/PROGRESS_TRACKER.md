@@ -7,12 +7,12 @@
 ## Week 1: Foundation & Abstractions
 
 ### Day 1 — Project Setup
-- [ ] GitHub repo initialized
-- [ ] Folder structure created (frontend/, backend/, docs/, scripts/, bruno/)
-- [ ] Docker setup (Dockerfile, docker-compose.yml)
-- [ ] .gitignore configured
-- [ ] .env.example created
-- [ ] README.md scaffolded
+- [x] GitHub repo initialized
+- [x] Folder structure created (frontend/, backend/, docs/, scripts/, bruno/)
+- [x] Docker setup (Dockerfile, docker-compose.yml)
+- [x] .gitignore configured
+- [x] .env.example created
+- [x] README.md scaffolded
 
 ### Day 2 — Provider Abstractions
 - [ ] LLM provider base class (`providers/llm/base.py`)
@@ -138,10 +138,10 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Week 1: Foundation & Abstractions | Not Started | 0/24 |
+| Week 1: Foundation & Abstractions | In Progress | 6/24 |
 | Week 2: AI Integration | Not Started | 0/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **0/64** |
+| **Total** | | **6/64** |
 
 ---
 
