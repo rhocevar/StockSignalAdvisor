@@ -20,16 +20,20 @@
 ## Project Structure
 
 ```
-frontend/          → Next.js 14 app
+frontend/          → Next.js 14 app (placeholder until Day 13)
 backend/app/       → FastAPI application
+  enums.py         → All enums (central, never duplicate)
+  config.py        → pydantic-settings (auto-loads .env)
+  main.py          → FastAPI entry point
+  api/routes/      → health.py, analysis.py
   providers/       → LLM and vector store abstractions (NEVER bypass these)
     llm/           → base.py, openai.py, anthropic.py, factory.py
     vectorstore/   → base.py, pinecone.py, factory.py
   agents/          → LangChain orchestrator and tools
   rag/             → LlamaIndex RAG pipeline
-  models/          → Pydantic request/response/domain models
+  models/          → domain.py, request.py, response.py
   services/        → Caching and shared services
-  api/routes/      → FastAPI route handlers
+backend/tests/     → pytest tests (conftest.py for shared fixtures)
 bruno/             → API test collections (Bruno)
 scripts/           → Utility scripts
 docs/              → Documentation
@@ -41,6 +45,7 @@ docs/              → Documentation
 - Python 3.11+, async/await everywhere
 - Pydantic v2 for all data models
 - Type hints on all function signatures
+- **Enums for all string constants** — defined in `app/enums.py`, never use magic strings
 - Use `providers/` abstraction layer — never import openai/anthropic/pinecone directly in business logic
 - FastAPI dependency injection for providers
 - All endpoints under `/api/v1/` prefix
@@ -63,6 +68,27 @@ docs/              → Documentation
 2. **Factory pattern for providers** — use `factory.py` to instantiate, driven by config
 3. **Three analysis pillars** — Technical (35%), Fundamental (35%), Sentiment (30%)
 4. **Cache aggressively** — use TTL-based in-memory cache for API responses
+5. **Enums are centralized** — all in `app/enums.py`, used in models, providers, and factories
+
+## Key Enums (app/enums.py)
+
+- `ChatMessageRole` — SYSTEM, USER, ASSISTANT
+- `LLMProviderType` — OPENAI, ANTHROPIC
+- `VectorStoreProviderType` — PINECONE, QDRANT, PGVECTOR
+- `DocumentType` — NEWS, FINANCIAL_REPORT, ANALYSIS, EARNINGS, SEC_FILING
+- `SignalType` — BUY, HOLD, SELL
+- `SentimentType` — POSITIVE, NEGATIVE, NEUTRAL, MIXED
+- `OpenAIModel`, `AnthropicModel`, `OpenAIEmbeddingModel` — model identifiers
+- `TrendDirection`, `MacdSignal`, `VolumeTrend` — technical analysis enums
+
+## Testing
+
+- **Framework:** pytest + pytest-asyncio (auto mode)
+- **Config:** `backend/pytest.ini`
+- **Fixtures:** `backend/tests/conftest.py` (mocked providers)
+- **Run:** `cd backend && source venv/Scripts/activate && python -m pytest tests/ -v`
+- **All tests are fully mocked** — no API keys required
+- **API testing:** Bruno collections in `bruno/` (run with `bru run --env local`)
 
 ## Workflow Rules
 

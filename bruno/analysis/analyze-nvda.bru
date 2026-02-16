@@ -1,0 +1,25 @@
+meta {
+  name: Analyze NVDA
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/analyze
+  body: json
+}
+
+body:json {
+  {
+    "ticker": "NVDA",
+    "include_news": true,
+    "include_technicals": true,
+    "include_fundamentals": true
+  }
+}
+
+tests {
+  test("returns NVDA analysis", function() {
+    expect(res.body.ticker).to.equal("NVDA");
+  });
+}

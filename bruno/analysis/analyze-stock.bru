@@ -1,0 +1,37 @@
+meta {
+  name: Analyze Stock
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/analyze
+  body: json
+}
+
+body:json {
+  {
+    "ticker": "AAPL",
+    "include_news": true,
+    "include_technicals": true,
+    "include_fundamentals": true
+  }
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("has signal", function() {
+    expect(res.body.signal).to.be.oneOf(["BUY", "HOLD", "SELL"]);
+  });
+
+  test("has confidence", function() {
+    expect(res.body.confidence).to.be.within(0, 1);
+  });
+
+  test("has explanation", function() {
+    expect(res.body.explanation).to.be.a("string");
+  });
+}

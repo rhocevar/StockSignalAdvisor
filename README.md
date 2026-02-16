@@ -67,7 +67,28 @@ docker compose up
 | `/api/v1/health` | GET | Health check + provider status |
 | `/api/v1/analyze` | POST | Analyze a stock ticker |
 
-See [docs/API.md](docs/API.md) for full API documentation.
+Swagger UI available at `http://localhost:8000/docs` when the server is running.
+
+## Testing
+
+### Unit Tests
+
+```bash
+cd backend
+source venv/bin/activate        # Windows: .\venv\Scripts\activate
+python -m pytest tests/ -v
+```
+
+All tests are fully mocked — no API keys required.
+
+### API Tests (Bruno)
+
+```bash
+# Install Bruno: https://www.usebruno.com/downloads
+cd bruno
+bru run --env local             # Run all tests against local server
+bru run analysis --env local    # Run analysis tests only
+```
 
 ## Project Structure
 
@@ -75,13 +96,17 @@ See [docs/API.md](docs/API.md) for full API documentation.
 frontend/           Next.js 14 application
 backend/            FastAPI application
   app/
-    api/routes/     Route handlers
+    enums.py        Centralized enums (no magic strings)
+    config.py       pydantic-settings (auto-loads .env)
+    main.py         FastAPI entry point
+    api/routes/     Route handlers (health, analysis)
     providers/      LLM + vector store abstractions
     agents/         LangChain orchestrator + tools
     rag/            RAG pipeline (LlamaIndex)
-    models/         Pydantic models
+    models/         Pydantic models (domain, request, response)
     services/       Caching + shared services
-bruno/              API test collections
+  tests/            pytest unit tests
+bruno/              API test collections (Bruno)
 docs/               Documentation
 scripts/            Utility scripts
 ```

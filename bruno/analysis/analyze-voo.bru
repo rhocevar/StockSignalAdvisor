@@ -1,0 +1,25 @@
+meta {
+  name: Analyze VOO
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/analyze
+  body: json
+}
+
+body:json {
+  {
+    "ticker": "VOO",
+    "include_news": true,
+    "include_technicals": true,
+    "include_fundamentals": true
+  }
+}
+
+tests {
+  test("returns VOO analysis", function() {
+    expect(res.body.ticker).to.equal("VOO");
+  });
+}

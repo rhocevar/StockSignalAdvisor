@@ -1,0 +1,25 @@
+meta {
+  name: Analyze AAPL
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/analyze
+  body: json
+}
+
+body:json {
+  {
+    "ticker": "AAPL",
+    "include_news": true,
+    "include_technicals": true,
+    "include_fundamentals": true
+  }
+}
+
+tests {
+  test("returns AAPL analysis", function() {
+    expect(res.body.ticker).to.equal("AAPL");
+  });
+}

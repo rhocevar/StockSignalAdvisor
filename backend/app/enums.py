@@ -38,3 +38,33 @@ class OpenAIEmbeddingModel(str, Enum):
 class AnthropicModel(str, Enum):
     CLAUDE_3_5_HAIKU = "claude-3-5-haiku-20241022"
     CLAUDE_3_5_SONNET = "claude-3-5-sonnet-20241022"
+
+
+class SignalType(str, Enum):
+    BUY = "BUY"
+    HOLD = "HOLD"
+    SELL = "SELL"
+
+
+class SentimentType(str, Enum):
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
+    NEUTRAL = "neutral"
+    MIXED = "mixed"
+
+
+class TrendDirection(str, Enum):
+    ABOVE = "above"
+    BELOW = "below"
+
+
+class MacdSignal(str, Enum):
+    BULLISH = "bullish"
+    BEARISH = "bearish"
+    NEUTRAL = "neutral"
+
+
+class VolumeTrend(str, Enum):
+    HIGH = "high"
+    LOW = "low"
+    NEUTRAL = "neutral"

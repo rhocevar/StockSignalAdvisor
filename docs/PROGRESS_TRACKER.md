@@ -26,11 +26,11 @@
 - [x] Provider abstraction unit tests (36 tests, fully mocked)
 
 ### Day 4 — Backend Scaffold
-- [ ] FastAPI app entry point (`main.py`)
-- [ ] Configuration management (`config.py` with pydantic-settings)
-- [ ] Health endpoint (`GET /api/v1/health`)
-- [ ] Pydantic request/response models
-- [ ] Domain models (StockData, Fundamentals, etc.)
+- [x] FastAPI app entry point (`main.py`)
+- [x] Configuration management (`config.py` with pydantic-settings)
+- [x] Health endpoint (`GET /api/v1/health`)
+- [x] Pydantic request/response models
+- [x] Domain models (StockData, Fundamentals, etc.)
 
 ### Day 5 — Stock Data & Technicals
 - [ ] yfinance wrapper (`tools/stock_data.py`)
@@ -138,10 +138,10 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Week 1: Foundation & Abstractions | In Progress | 13/24 |
+| Week 1: Foundation & Abstractions | In Progress | 18/24 |
 | Week 2: AI Integration | Not Started | 0/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **13/64** |
+| **Total** | | **18/64** |
 
 ---
 

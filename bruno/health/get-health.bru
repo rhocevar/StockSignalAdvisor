@@ -1,0 +1,24 @@
+meta {
+  name: Get Health
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/health
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("status is healthy", function() {
+    expect(res.body.status).to.equal("healthy");
+  });
+
+  test("has provider info", function() {
+    expect(res.body.providers).to.have.property("llm");
+    expect(res.body.providers).to.have.property("vectorstore");
+  });
+}
