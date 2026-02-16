@@ -33,9 +33,9 @@
 - [x] Domain models (StockData, Fundamentals, etc.)
 
 ### Day 5 — Stock Data & Technicals
-- [ ] yfinance wrapper (`tools/stock_data.py`)
-- [ ] Technical indicators: RSI, MACD, SMA (`tools/technical.py`)
-- [ ] Unit tests for technical calculations
+- [x] yfinance wrapper (`tools/stock_data.py`)
+- [x] Technical indicators: RSI, MACD, SMA (`tools/technical.py`)
+- [x] Unit tests for technical calculations (41 new tests, 77 total)
 
 ### Day 6 — Fundamentals Tool
 - [ ] FundamentalMetrics Pydantic model
@@ -138,10 +138,10 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Week 1: Foundation & Abstractions | In Progress | 18/24 |
+| Week 1: Foundation & Abstractions | In Progress | 21/24 |
 | Week 2: AI Integration | Not Started | 0/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **18/64** |
+| **Total** | | **21/64** |
 
 ---
 
