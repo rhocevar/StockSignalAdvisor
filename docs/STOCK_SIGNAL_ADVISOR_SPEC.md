@@ -1,7 +1,5 @@
 # Stock Signal Advisor - Project Specification
 
-> **Purpose:** This document provides complete context for building an AI-powered stock analysis tool. Use this as the foundational context when working with Cursor IDE or any AI coding assistant.
-
 ---
 
 ## 🎯 Project Overview
@@ -261,6 +259,19 @@ stock-signal-advisor/
 ├── scripts/
 │   ├── seed_pinecone.py        # Seed initial embeddings
 │   └── test_local.sh           # Local testing script
+│
+├── bruno/                       # API testing collections (Bruno)
+│   ├── bruno.json              # Bruno collection config
+│   ├── environments/
+│   │   ├── local.bru           # Local environment variables
+│   │   └── production.bru      # Production environment variables
+│   ├── health/
+│   │   └── get-health.bru      # GET /api/v1/health
+│   └── analysis/
+│       ├── analyze-stock.bru   # POST /api/v1/analyze
+│       ├── analyze-aapl.bru    # Pre-configured AAPL request
+│       ├── analyze-nvda.bru    # Pre-configured NVDA request
+│       └── analyze-voo.bru     # Pre-configured VOO request
 │
 ├── docker-compose.yml           # Local development
 ├── .env.example                 # Environment template
@@ -1208,13 +1219,347 @@ class TestVectorStoreProviders:
 
 ---
 
-## 📊 Interview Talking Points (Updated)
+## 🐍 Python Virtual Environment Setup
 
-- "I built **provider-agnostic abstractions** — swapping OpenAI for Claude or Pinecone for Qdrant is a one-line config change"
-- "The agent combines **three analysis pillars**: technicals, fundamentals, and sentiment — each weighted in the final recommendation"
-- "**Fundamental analysis** includes 20+ metrics: valuation ratios, profitability, growth, and financial health indicators"
-- "**LangChain agent** autonomously decides which tools to call based on the analysis needed"
-- "The architecture is **SaaS-ready** — adding auth and subscriptions would take 2-3 weeks, not a rewrite"
+### Setup Instructions
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create virtual environment (one-time)
+python3.11 -m venv venv
+
+# Activate virtual environment
+# macOS/Linux:
+source venv/bin/activate
+
+# Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+
+# Windows (CMD):
+.\venv\Scripts\activate.bat
+```
+
+### Verify Activation
+
+When activated, your terminal prompt will show `(venv)`:
+```bash
+(venv) ~/stock-signal-advisor/backend $
+```
+
+You can also verify:
+```bash
+# Should point to venv, not system Python
+which python    # macOS/Linux
+where python    # Windows
+
+# Expected output: /path/to/project/backend/venv/bin/python
+```
+
+### Install Dependencies
+
+```bash
+# Make sure venv is activated, then:
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### Deactivate When Done
+
+```bash
+deactivate
+```
+
+### requirements.txt
+
+```txt
+# backend/requirements.txt
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# AI/ML
+langchain==0.1.4
+langchain-openai==0.0.5
+langchain-anthropic==0.0.2
+llama-index==0.9.30
+openai==1.10.0
+anthropic==0.18.0
+
+# Vector Store
+pinecone-client==3.0.2
+
+# Data Sources
+yfinance==0.2.35
+requests==2.31.0
+
+# Caching
+cachetools==5.3.2
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0
+
+# Development
+python-dotenv==1.0.0
+```
+
+### .gitignore (Virtual Environment)
+
+Make sure your `.gitignore` excludes the venv folder:
+
+```gitignore
+# backend/.gitignore (or root .gitignore)
+
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+```
+
+### Quick Reference
+
+| Command | Description |
+|---------|-------------|
+| `python3.11 -m venv venv` | Create virtual environment |
+| `source venv/bin/activate` | Activate (macOS/Linux) |
+| `.\venv\Scripts\Activate.ps1` | Activate (Windows PowerShell) |
+| `pip install -r requirements.txt` | Install dependencies |
+| `pip freeze > requirements.txt` | Save current dependencies |
+| `deactivate` | Deactivate virtual environment |
+
+### Troubleshooting
+
+**"python3.11 not found"**
+```bash
+# macOS (with Homebrew)
+brew install python@3.11
+
+# Ubuntu/Debian
+sudo apt install python3.11 python3.11-venv
+
+# Windows: Download from python.org
+```
+
+**"pip install fails with permission error"**
+```bash
+# Make sure venv is activated! Look for (venv) in prompt
+source venv/bin/activate
+```
+
+**"Module not found" when running app**
+```bash
+# Ensure venv is activated and deps are installed
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+---
+
+## 🧪 Local API Testing with Bruno
+
+### Why Bruno?
+
+Bruno is a Git-friendly, offline-first API client. Unlike Postman, your API collections are stored as plain files in your repo — version-controlled and shareable.
+
+**Installation:**
+```bash
+# macOS
+brew install bruno
+
+# Windows
+choco install bruno
+
+# Or download from: https://www.usebruno.com/downloads
+```
+
+### Bruno Collection Structure
+
+```
+bruno/
+├── bruno.json                 # Collection metadata
+├── environments/
+│   ├── local.bru              # Local dev environment
+│   └── production.bru         # Production environment
+├── health/
+│   └── get-health.bru         # Health check request
+└── analysis/
+    ├── analyze-stock.bru      # Generic analysis request
+    ├── analyze-aapl.bru       # Quick test: AAPL
+    ├── analyze-nvda.bru       # Quick test: NVDA
+    └── analyze-voo.bru        # Quick test: VOO
+```
+
+### Collection Config
+
+```json
+// bruno/bruno.json
+{
+  "version": "1",
+  "name": "Stock Signal Advisor",
+  "type": "collection",
+  "ignore": ["node_modules", ".git"]
+}
+```
+
+### Environment Files
+
+```bru
+// bruno/environments/local.bru
+vars {
+  baseUrl: http://localhost:8000
+}
+```
+
+```bru
+// bruno/environments/production.bru
+vars {
+  baseUrl: https://your-app.awsapprunner.com
+}
+```
+
+### Request Files
+
+```bru
+// bruno/health/get-health.bru
+meta {
+  name: Get Health
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/health
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("status is healthy", function() {
+    expect(res.body.status).to.equal("healthy");
+  });
+}
+```
+
+```bru
+// bruno/analysis/analyze-stock.bru
+meta {
+  name: Analyze Stock
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/analyze
+  body: json
+}
+
+body:json {
+  {
+    "ticker": "AAPL",
+    "include_news": true,
+    "include_technicals": true,
+    "include_fundamentals": true
+  }
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("has signal", function() {
+    expect(res.body.signal).to.be.oneOf(["BUY", "HOLD", "SELL"]);
+  });
+  
+  test("has confidence", function() {
+    expect(res.body.confidence).to.be.within(0, 1);
+  });
+  
+  test("has explanation", function() {
+    expect(res.body.explanation).to.be.a("string");
+  });
+}
+```
+
+```bru
+// bruno/analysis/analyze-aapl.bru
+meta {
+  name: Analyze AAPL
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/analyze
+  body: json
+}
+
+body:json {
+  {
+    "ticker": "AAPL",
+    "include_news": true,
+    "include_technicals": true,
+    "include_fundamentals": true
+  }
+}
+
+tests {
+  test("returns AAPL analysis", function() {
+    expect(res.body.ticker).to.equal("AAPL");
+    expect(res.body.company_name).to.include("Apple");
+  });
+}
+```
+
+### Running Tests
+
+```bash
+# Run all tests against local environment
+cd bruno
+bru run --env local
+
+# Run specific folder
+bru run analysis --env local
+
+# Run single request
+bru run analysis/analyze-aapl.bru --env local
+
+# Run against production
+bru run --env production
+```
 
 ---
 
@@ -1250,11 +1595,6 @@ class TestVectorStoreProviders:
 
 **Rafael Hocevar** — Principal Software Engineer
 
-### Relevant Experience
-- **VybeOS (Current):** Building AI-powered SaaS with RAG, LlamaIndex, pgvector, and model-agnostic LLM providers (Vertex AI, OpenAI, Anthropic)
-- **Blizzard Entertainment:** Distributed systems for Warcraft Rumble (150K+ DAU), microservices architecture
-- **Kabam/MGN Studios:** Full-stack game development, real-time systems
-
 ### Skills Demonstrated by This Project
 - ✅ AI/ML Integration (RAG, agents, LLM orchestration)
 - ✅ Provider abstraction patterns (swappable LLM & vector stores)
@@ -1266,4 +1606,4 @@ class TestVectorStoreProviders:
 ---
 
 *Last updated: February 2025*
-*Version: 3.0 (With Abstractions & Expanded Fundamentals)*
+*Version: 3.2 (With Abstractions, Fundamentals, Bruno & venv)*
