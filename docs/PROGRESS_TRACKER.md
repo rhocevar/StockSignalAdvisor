@@ -44,9 +44,9 @@
 - [x] Unit tests for fundamentals (28 new tests, 105 total)
 
 ### Day 7 — News Integration
-- [ ] NewsAPI wrapper (`tools/news_fetcher.py`)
-- [ ] Headline fetching and formatting
-- [ ] Unit tests for news fetcher
+- [x] NewsAPI wrapper (`tools/news_fetcher.py`)
+- [x] Headline fetching and formatting
+- [x] Unit tests for news fetcher (14 new tests, 122 total)
 
 ---
 
@@ -138,10 +138,10 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Week 1: Foundation & Abstractions | In Progress | 25/28 |
+| Week 1: Foundation & Abstractions | Complete | 28/28 |
 | Week 2: AI Integration | Not Started | 0/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **25/68** |
+| **Total** | | **28/68** |
 
 ---
 
