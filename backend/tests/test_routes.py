@@ -1,0 +1,287 @@
+"""Tests for API route endpoints."""
+
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.enums import MacdSignal, SignalType, TrendDirection, VolumeTrend
+from app.main import app
+from app.models.domain import (
+    FundamentalAnalysis,
+    NewsSource,
+    PriceData,
+    TechnicalAnalysis,
+)
+
+client = TestClient(app)
+
+
+# ---------------------------------------------------------------------------
+# Health endpoint
+# ---------------------------------------------------------------------------
+
+
+class TestHealthEndpoint:
+    def test_health_returns_200(self):
+        response = client.get("/api/v1/health")
+        assert response.status_code == 200
+
+    def test_health_response_structure(self):
+        data = client.get("/api/v1/health").json()
+        assert data["status"] == "healthy"
+        assert data["version"] == "1.0.0"
+        assert "providers" in data
+        assert "timestamp" in data
+
+    def test_health_providers_populated(self):
+        data = client.get("/api/v1/health").json()
+        assert data["providers"]["llm"] is not None
+        assert data["providers"]["vectorstore"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Analysis endpoint (stub)
+# ---------------------------------------------------------------------------
+
+
+class TestAnalyzeEndpoint:
+    def test_analyze_returns_200(self):
+        response = client.post("/api/v1/analyze", json={"ticker": "AAPL"})
+        assert response.status_code == 200
+
+    def test_analyze_response_structure(self):
+        data = client.post("/api/v1/analyze", json={"ticker": "AAPL"}).json()
+        assert data["ticker"] == "AAPL"
+        assert data["signal"] == SignalType.HOLD.value
+        assert data["confidence"] == 0.5
+        assert "explanation" in data
+        assert "analysis" in data
+        assert "metadata" in data
+
+    def test_analyze_uppercases_ticker(self):
+        data = client.post("/api/v1/analyze", json={"ticker": "aapl"}).json()
+        assert data["ticker"] == "AAPL"
+
+    def test_analyze_missing_ticker(self):
+        response = client.post("/api/v1/analyze", json={})
+        assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Tools: stock-price
+# ---------------------------------------------------------------------------
+
+_SAMPLE_PRICE = PriceData(
+    current=150.0,
+    change_percent_1d=-1.5,
+    change_percent_1w=2.3,
+    change_percent_1m=5.0,
+)
+
+
+class TestStockPriceEndpoint:
+    @patch("app.api.routes.tools.get_stock_price", return_value=_SAMPLE_PRICE)
+    def test_returns_price_data(self, mock_fn):
+        response = client.get("/api/v1/tools/stock-price/AAPL")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["current"] == 150.0
+        assert data["change_percent_1d"] == -1.5
+        mock_fn.assert_called_once_with("AAPL")
+
+    @patch("app.api.routes.tools.get_stock_price", side_effect=ValueError("No data"))
+    def test_returns_404_on_value_error(self, mock_fn):
+        response = client.get("/api/v1/tools/stock-price/INVALID")
+        assert response.status_code == 404
+
+    @patch("app.api.routes.tools.get_stock_price", side_effect=RuntimeError("boom"))
+    def test_returns_502_on_unexpected_error(self, mock_fn):
+        response = client.get("/api/v1/tools/stock-price/AAPL")
+        assert response.status_code == 502
+        assert response.json()["detail"] == "Upstream data provider error"
+
+    def test_rejects_invalid_ticker(self):
+        response = client.get("/api/v1/tools/stock-price/INVALID!!!")
+        assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Tools: company-name
+# ---------------------------------------------------------------------------
+
+
+class TestCompanyNameEndpoint:
+    @patch("app.api.routes.tools.get_company_name", return_value="Apple Inc.")
+    def test_returns_company_name(self, mock_fn):
+        response = client.get("/api/v1/tools/company-name/AAPL")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ticker"] == "AAPL"
+        assert data["company_name"] == "Apple Inc."
+
+    @patch("app.api.routes.tools.get_company_name", return_value=None)
+    def test_returns_null_when_unknown(self, mock_fn):
+        response = client.get("/api/v1/tools/company-name/XYZ")
+        assert response.status_code == 200
+        assert response.json()["company_name"] is None
+
+    @patch("app.api.routes.tools.get_company_name", side_effect=RuntimeError("boom"))
+    def test_returns_502_on_error(self, mock_fn):
+        response = client.get("/api/v1/tools/company-name/AAPL")
+        assert response.status_code == 502
+
+
+# ---------------------------------------------------------------------------
+# Tools: technicals
+# ---------------------------------------------------------------------------
+
+_SAMPLE_TECHNICALS = TechnicalAnalysis(
+    rsi=55.0,
+    rsi_interpretation="neutral",
+    sma_50=145.0,
+    sma_200=130.0,
+    price_vs_sma50=TrendDirection.ABOVE,
+    price_vs_sma200=TrendDirection.ABOVE,
+    macd_signal=MacdSignal.BULLISH,
+    volume_trend=VolumeTrend.NEUTRAL,
+    technical_score=0.75,
+)
+
+
+class TestTechnicalsEndpoint:
+    @patch("app.api.routes.tools.calculate_technicals", return_value=_SAMPLE_TECHNICALS)
+    def test_returns_technicals(self, mock_fn):
+        response = client.get("/api/v1/tools/technicals/AAPL")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["rsi"] == 55.0
+        assert data["technical_score"] == 0.75
+
+    @patch("app.api.routes.tools.calculate_technicals", side_effect=ValueError("No data"))
+    def test_returns_404_on_value_error(self, mock_fn):
+        response = client.get("/api/v1/tools/technicals/INVALID")
+        assert response.status_code == 404
+
+    @patch("app.api.routes.tools.calculate_technicals", side_effect=RuntimeError("boom"))
+    def test_returns_502_on_unexpected_error(self, mock_fn):
+        response = client.get("/api/v1/tools/technicals/AAPL")
+        assert response.status_code == 502
+
+
+# ---------------------------------------------------------------------------
+# Tools: fundamentals
+# ---------------------------------------------------------------------------
+
+_SAMPLE_FUNDAMENTALS = FundamentalAnalysis(
+    pe_ratio=25.0,
+    market_cap=2_500_000_000_000,
+    fundamental_score=0.65,
+)
+
+
+class TestFundamentalsEndpoint:
+    @patch(
+        "app.api.routes.tools.calculate_fundamentals",
+        return_value=_SAMPLE_FUNDAMENTALS,
+    )
+    def test_returns_fundamentals(self, mock_fn):
+        response = client.get("/api/v1/tools/fundamentals/AAPL")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["pe_ratio"] == 25.0
+        assert data["fundamental_score"] == 0.65
+
+    @patch(
+        "app.api.routes.tools.calculate_fundamentals",
+        side_effect=ValueError("No data"),
+    )
+    def test_returns_404_on_value_error(self, mock_fn):
+        response = client.get("/api/v1/tools/fundamentals/INVALID")
+        assert response.status_code == 404
+
+    @patch(
+        "app.api.routes.tools.calculate_fundamentals",
+        side_effect=RuntimeError("boom"),
+    )
+    def test_returns_502_on_unexpected_error(self, mock_fn):
+        response = client.get("/api/v1/tools/fundamentals/AAPL")
+        assert response.status_code == 502
+
+
+# ---------------------------------------------------------------------------
+# Tools: news
+# ---------------------------------------------------------------------------
+
+_SAMPLE_NEWS = [
+    NewsSource(
+        title="Apple Reports Record Revenue",
+        source="Reuters",
+        url="https://example.com/1",
+        published_at=datetime(2025, 2, 14, tzinfo=timezone.utc),
+    ),
+    NewsSource(
+        title="iPhone Sales Decline in China",
+        source="Bloomberg",
+        url="https://example.com/2",
+        published_at=datetime(2025, 2, 13, tzinfo=timezone.utc),
+    ),
+]
+
+
+class TestNewsEndpoint:
+    @patch("app.api.routes.tools.fetch_news_headlines", return_value=_SAMPLE_NEWS)
+    def test_returns_news(self, mock_fn):
+        response = client.get("/api/v1/tools/news/AAPL")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        assert data[0]["title"] == "Apple Reports Record Revenue"
+        assert data[0]["source"] == "Reuters"
+
+    @patch("app.api.routes.tools.fetch_news_headlines", return_value=[])
+    def test_returns_empty_list(self, mock_fn):
+        response = client.get("/api/v1/tools/news/AAPL")
+        assert response.status_code == 200
+        assert response.json() == []
+
+    @patch(
+        "app.api.routes.tools.fetch_news_headlines",
+        side_effect=ValueError("NEWS_API_KEY is not configured"),
+    )
+    def test_returns_400_on_value_error(self, mock_fn):
+        response = client.get("/api/v1/tools/news/AAPL")
+        assert response.status_code == 400
+
+    @patch(
+        "app.api.routes.tools.fetch_news_headlines",
+        side_effect=RuntimeError("boom"),
+    )
+    def test_returns_502_on_unexpected_error(self, mock_fn):
+        response = client.get("/api/v1/tools/news/AAPL")
+        assert response.status_code == 502
+
+
+# ---------------------------------------------------------------------------
+# Ticker validation (shared across all tools endpoints)
+# ---------------------------------------------------------------------------
+
+
+class TestTickerValidation:
+    """Verify the ticker regex pattern rejects invalid symbols."""
+
+    @pytest.mark.parametrize(
+        "endpoint",
+        [
+            "/api/v1/tools/stock-price/",
+            "/api/v1/tools/company-name/",
+            "/api/v1/tools/technicals/",
+            "/api/v1/tools/fundamentals/",
+            "/api/v1/tools/news/",
+        ],
+    )
+    @pytest.mark.parametrize("bad_ticker", ["AB CD", "A@#$", "VERYLONGTICKER1"])
+    def test_rejects_invalid_tickers(self, endpoint, bad_ticker):
+        response = client.get(f"{endpoint}{bad_ticker}")
+        assert response.status_code == 422

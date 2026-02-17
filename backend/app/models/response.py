@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -13,12 +12,12 @@ from app.models.domain import (
 
 class AnalyzeResponse(BaseModel):
     ticker: str
-    company_name: Optional[str] = None
+    company_name: str | None = None
     signal: SignalType
     confidence: float
     explanation: str
     analysis: AnalysisResult
-    price_data: Optional[PriceData] = None
+    price_data: PriceData | None = None
     sources: list[NewsSource] = []
     metadata: AnalysisMetadata
 

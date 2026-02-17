@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 
 from app.enums import MacdSignal, TrendDirection, VolumeTrend
@@ -8,7 +6,7 @@ from app.models.domain import TechnicalAnalysis
 from .stock_data import get_price_history
 
 
-def calculate_rsi(prices: pd.Series, period: int = 14) -> Optional[float]:
+def calculate_rsi(prices: pd.Series, period: int = 14) -> float | None:
     """Calculate Relative Strength Index (RSI).
 
     RSI = 100 - (100 / (1 + RS))
@@ -45,7 +43,7 @@ def interpret_rsi(rsi: float) -> str:
     return "neutral"
 
 
-def calculate_sma(prices: pd.Series, period: int) -> Optional[float]:
+def calculate_sma(prices: pd.Series, period: int) -> float | None:
     """Calculate Simple Moving Average."""
     if len(prices) < period:
         return None
@@ -57,7 +55,7 @@ def calculate_macd(
     fast_period: int = 12,
     slow_period: int = 26,
     signal_period: int = 9,
-) -> tuple[Optional[float], Optional[float], Optional[float]]:
+) -> tuple[float | None, float | None, float | None]:
     """Calculate MACD (Moving Average Convergence Divergence).
 
     Returns (macd_line, signal_line, histogram).
@@ -79,7 +77,7 @@ def calculate_macd(
 
 
 def interpret_macd(
-    macd_line: Optional[float], signal_line: Optional[float]
+    macd_line: float | None, signal_line: float | None
 ) -> MacdSignal:
     """Interpret MACD crossover into a signal."""
     if macd_line is None or signal_line is None:
@@ -111,10 +109,10 @@ def assess_volume_trend(volumes: pd.Series, window: int = 20) -> VolumeTrend:
 
 
 def calculate_technical_score(
-    rsi: Optional[float],
+    rsi: float | None,
     macd_signal: MacdSignal,
-    price_vs_sma50: Optional[TrendDirection],
-    price_vs_sma200: Optional[TrendDirection],
+    price_vs_sma50: TrendDirection | None,
+    price_vs_sma200: TrendDirection | None,
     volume_trend: VolumeTrend,
 ) -> float:
     """Calculate a composite technical score from 0.0 (bearish) to 1.0 (bullish).

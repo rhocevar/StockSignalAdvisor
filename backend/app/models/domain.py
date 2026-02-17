@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -13,61 +12,61 @@ from app.enums import (
 
 
 class TechnicalAnalysis(BaseModel):
-    rsi: Optional[float] = None
-    rsi_interpretation: Optional[str] = None
-    sma_50: Optional[float] = None
-    sma_200: Optional[float] = None
-    price_vs_sma50: Optional[TrendDirection] = None
-    price_vs_sma200: Optional[TrendDirection] = None
-    macd_signal: Optional[MacdSignal] = None
-    volume_trend: Optional[VolumeTrend] = None
-    technical_score: Optional[float] = None
+    rsi: float | None = None
+    rsi_interpretation: str | None = None
+    sma_50: float | None = None
+    sma_200: float | None = None
+    price_vs_sma50: TrendDirection | None = None
+    price_vs_sma200: TrendDirection | None = None
+    macd_signal: MacdSignal | None = None
+    volume_trend: VolumeTrend | None = None
+    technical_score: float | None = None
 
 
 class FundamentalAnalysis(BaseModel):
     # Valuation
-    pe_ratio: Optional[float] = None
-    forward_pe: Optional[float] = None
-    peg_ratio: Optional[float] = None
-    price_to_book: Optional[float] = None
-    price_to_sales: Optional[float] = None
-    enterprise_to_ebitda: Optional[float] = None
+    pe_ratio: float | None = None
+    forward_pe: float | None = None
+    peg_ratio: float | None = None
+    price_to_book: float | None = None
+    price_to_sales: float | None = None
+    enterprise_to_ebitda: float | None = None
 
     # Profitability
-    profit_margin: Optional[float] = None
-    operating_margin: Optional[float] = None
-    gross_margin: Optional[float] = None
-    return_on_equity: Optional[float] = None
-    return_on_assets: Optional[float] = None
+    profit_margin: float | None = None
+    operating_margin: float | None = None
+    gross_margin: float | None = None
+    return_on_equity: float | None = None
+    return_on_assets: float | None = None
 
     # Growth
-    revenue_growth: Optional[float] = None
-    earnings_growth: Optional[float] = None
-    earnings_quarterly_growth: Optional[float] = None
+    revenue_growth: float | None = None
+    earnings_growth: float | None = None
+    earnings_quarterly_growth: float | None = None
 
     # Financial Health
-    current_ratio: Optional[float] = None
-    debt_to_equity: Optional[float] = None
-    free_cash_flow: Optional[float] = None
-    operating_cash_flow: Optional[float] = None
+    current_ratio: float | None = None
+    debt_to_equity: float | None = None
+    free_cash_flow: float | None = None
+    operating_cash_flow: float | None = None
 
     # Dividends
-    dividend_yield: Optional[float] = None
-    dividend_payout_ratio: Optional[float] = None
+    dividend_yield: float | None = None
+    dividend_payout_ratio: float | None = None
 
     # Size & Market
-    market_cap: Optional[float] = None
-    enterprise_value: Optional[float] = None
-    shares_outstanding: Optional[float] = None
-    float_shares: Optional[float] = None
+    market_cap: float | None = None
+    enterprise_value: float | None = None
+    shares_outstanding: float | None = None
+    float_shares: float | None = None
 
     # Analyst
-    analyst_target: Optional[float] = None
-    analyst_rating: Optional[float] = None
-    number_of_analysts: Optional[int] = None
+    analyst_target: float | None = None
+    analyst_rating: float | None = None
+    number_of_analysts: int | None = None
 
     # Derived
-    fundamental_score: Optional[float] = None
+    fundamental_score: float | None = None
     insights: list[str] = []
 
 
@@ -77,36 +76,36 @@ class FundamentalInterpretation(BaseModel):
 
 
 class SentimentAnalysis(BaseModel):
-    overall: Optional[SentimentType] = None
-    score: Optional[float] = None
+    overall: SentimentType | None = None
+    score: float | None = None
     positive_count: int = 0
     negative_count: int = 0
     neutral_count: int = 0
 
 
 class AnalysisResult(BaseModel):
-    technical: Optional[TechnicalAnalysis] = None
-    fundamentals: Optional[FundamentalAnalysis] = None
-    sentiment: Optional[SentimentAnalysis] = None
+    technical: TechnicalAnalysis | None = None
+    fundamentals: FundamentalAnalysis | None = None
+    sentiment: SentimentAnalysis | None = None
 
 
 class PriceData(BaseModel):
-    current: Optional[float] = None
+    current: float | None = None
     currency: str = "USD"
-    change_percent_1d: Optional[float] = None
-    change_percent_1w: Optional[float] = None
-    change_percent_1m: Optional[float] = None
-    high_52w: Optional[float] = None
-    low_52w: Optional[float] = None
+    change_percent_1d: float | None = None
+    change_percent_1w: float | None = None
+    change_percent_1m: float | None = None
+    high_52w: float | None = None
+    low_52w: float | None = None
 
 
 class NewsSource(BaseModel):
     type: str = "news"
     title: str
-    source: Optional[str] = None
-    url: Optional[str] = None
-    sentiment: Optional[SentimentType] = None
-    published_at: Optional[datetime] = None
+    source: str | None = None
+    url: str | None = None
+    sentiment: SentimentType | None = None
+    published_at: datetime | None = None
 
 
 class AnalysisMetadata(BaseModel):

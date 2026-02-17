@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -10,7 +9,7 @@ class Document(BaseModel):
     id: str
     content: str
     doc_type: DocumentType
-    embedding: Optional[list[float]] = None
+    embedding: list[float] | None = None
     metadata: dict = {}
 
 
@@ -34,7 +33,7 @@ class VectorStoreProvider(ABC):
         self,
         query_embedding: list[float],
         top_k: int = 5,
-        filter: Optional[dict] = None,
+        filter: dict | None = None,
     ) -> list[SearchResult]:
         """Search for similar documents."""
         pass

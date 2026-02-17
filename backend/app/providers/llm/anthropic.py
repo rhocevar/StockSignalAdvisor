@@ -24,12 +24,13 @@ class AnthropicProvider(LLMProvider):
             else:
                 chat_messages.append({"role": m.role.value, "content": m.content})
 
-        if json_mode and system:
-            system += "\n\nRespond with valid JSON only."
+        if json_mode:
+            system = (system or "") + "\n\nRespond with valid JSON only."
 
         response = await self.client.messages.create(
             model=self.model,
             max_tokens=max_tokens,
+            temperature=temperature,
             system=system,
             messages=chat_messages,
         )

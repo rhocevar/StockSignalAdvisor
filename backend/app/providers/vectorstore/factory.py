@@ -8,6 +8,8 @@ def get_vectorstore_provider() -> VectorStoreProvider:
     """Factory function to get the configured vector store provider."""
 
     if settings.VECTORSTORE_PROVIDER == VectorStoreProviderType.PINECONE:
+        if not settings.PINECONE_API_KEY:
+            raise ValueError("PINECONE_API_KEY is required when VECTORSTORE_PROVIDER=pinecone")
         return PineconeProvider(
             api_key=settings.PINECONE_API_KEY,
             index_name=settings.PINECONE_INDEX_NAME,

@@ -1,9 +1,8 @@
 from enum import Enum
-from typing import Optional
 
 from pinecone import Pinecone
 
-from .base import VectorStoreProvider, Document, SearchResult
+from .base import Document, SearchResult, VectorStoreProvider
 
 
 class PineconeMetadataKey(str, Enum):
@@ -45,6 +44,7 @@ class PineconeProvider(VectorStoreProvider):
             }
             for doc in documents
         ]
+        # TODO: wrap in asyncio.to_thread() when called from async context
         self.index.upsert(vectors=vectors)
         return len(vectors)
 
@@ -52,7 +52,7 @@ class PineconeProvider(VectorStoreProvider):
         self,
         query_embedding: list[float],
         top_k: int = 5,
-        filter: Optional[dict] = None,
+        filter: dict | None = None,
     ) -> list[SearchResult]:
         results = self.index.query(
             vector=query_embedding,
