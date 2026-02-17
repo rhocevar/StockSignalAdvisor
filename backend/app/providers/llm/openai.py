@@ -1,7 +1,7 @@
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, RateLimitError
 
 from app.enums import OpenAIModel, OpenAIEmbeddingModel
-from .base import LLMProvider, ChatMessage, LLMResponse
+from .base import LLMProvider, LLMRateLimitError, ChatMessage, LLMResponse
 
 
 class OpenAIProvider(LLMProvider):
@@ -17,13 +17,16 @@ class OpenAIProvider(LLMProvider):
         max_tokens: int = 1000,
         json_mode: bool = False,
     ) -> LLMResponse:
-        response = await self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": m.role.value, "content": m.content} for m in messages],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            response_format={"type": "json_object"} if json_mode else None,
-        )
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": m.role.value, "content": m.content} for m in messages],
+                temperature=temperature,
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"} if json_mode else None,
+            )
+        except RateLimitError as e:
+            raise LLMRateLimitError(str(e)) from e
         return LLMResponse(
             content=response.choices[0].message.content,
             model=self.model,

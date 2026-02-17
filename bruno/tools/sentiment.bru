@@ -1,0 +1,29 @@
+meta {
+  name: Analyze Sentiment
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tools/sentiment/AAPL
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("has overall sentiment", function() {
+    expect(res.body.overall).to.be.oneOf(["positive", "negative", "neutral", "mixed"]);
+  });
+
+  test("has score between 0 and 1", function() {
+    expect(res.body.score).to.be.within(0, 1);
+  });
+
+  test("has sentiment counts", function() {
+    expect(res.body).to.have.property("positive_count");
+    expect(res.body).to.have.property("negative_count");
+    expect(res.body).to.have.property("neutral_count");
+  });
+}

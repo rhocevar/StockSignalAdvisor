@@ -4,6 +4,10 @@ from pydantic import BaseModel
 from app.enums import ChatMessageRole
 
 
+class LLMRateLimitError(Exception):
+    """Raised when the LLM provider returns a rate-limit or quota error."""
+
+
 class ChatMessage(BaseModel):
     role: ChatMessageRole
     content: str

@@ -8,7 +8,7 @@ from app.models.domain import PriceData
 # TODO(Day 12): Share a single yf.Ticker instance across stock_data, technical,
 # and fundamentals when the orchestrator is built, to avoid redundant API calls.
 
-_YF_TIMEOUT = 10
+_YF_TIMEOUT_SECONDS = 10
 
 
 def get_stock_price(ticker: str) -> PriceData:
@@ -20,7 +20,7 @@ def get_stock_price(ticker: str) -> PriceData:
         raise ValueError(f"No price data found for ticker: {ticker}")
 
     current_price = info.get("regularMarketPrice") or info.get("currentPrice")
-    history = stock.history(period="1mo", timeout=_YF_TIMEOUT)
+    history = stock.history(period="1mo", timeout=_YF_TIMEOUT_SECONDS)
 
     change_1d: float | None = None
     change_1w: float | None = None
@@ -60,7 +60,7 @@ def get_stock_price(ticker: str) -> PriceData:
 def get_price_history(ticker: str, period: str = "1y") -> pd.DataFrame:
     """Fetch OHLCV price history for a ticker."""
     stock = yf.Ticker(ticker)
-    history = stock.history(period=period, timeout=_YF_TIMEOUT)
+    history = stock.history(period=period, timeout=_YF_TIMEOUT_SECONDS)
 
     if history.empty:
         raise ValueError(f"No price history found for ticker: {ticker}")

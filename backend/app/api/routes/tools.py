@@ -4,12 +4,15 @@ from fastapi import APIRouter, HTTPException, Path
 
 from app.agents.tools.fundamentals import calculate_fundamentals
 from app.agents.tools.news_fetcher import fetch_news_headlines
+from app.agents.tools.sentiment import analyze_sentiment
 from app.agents.tools.stock_data import get_company_name, get_stock_price
 from app.agents.tools.technical import calculate_technicals
+from app.providers.llm.base import LLMRateLimitError
 from app.models.domain import (
     FundamentalAnalysis,
     NewsSource,
     PriceData,
+    SentimentAnalysis,
     TechnicalAnalysis,
 )
 
@@ -78,4 +81,22 @@ def tool_news(ticker: str = TickerPath) -> list[NewsSource]:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.exception("Failed to fetch news for %s", ticker)
+        raise HTTPException(status_code=502, detail="Upstream data provider error")
+
+
+@router.get("/sentiment/{ticker}", response_model=SentimentAnalysis)
+async def tool_sentiment(ticker: str = TickerPath) -> SentimentAnalysis:
+    """Fetch news and analyze sentiment via LLM for a ticker."""
+    try:
+        headlines = fetch_news_headlines(ticker.upper())
+        return await analyze_sentiment(headlines)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except LLMRateLimitError:
+        raise HTTPException(
+            status_code=429,
+            detail="LLM provider rate limit exceeded. Please try again later.",
+        )
+    except Exception as e:
+        logger.exception("Failed to analyze sentiment for %s", ticker)
         raise HTTPException(status_code=502, detail="Upstream data provider error")

@@ -1,17 +1,19 @@
 """Tests for API route endpoints."""
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.enums import MacdSignal, SignalType, TrendDirection, VolumeTrend
+from app.enums import MacdSignal, SentimentType, SignalType, TrendDirection, VolumeTrend
 from app.main import app
+from app.providers.llm.base import LLMRateLimitError
 from app.models.domain import (
     FundamentalAnalysis,
     NewsSource,
     PriceData,
+    SentimentAnalysis,
     TechnicalAnalysis,
 )
 
@@ -264,6 +266,65 @@ class TestNewsEndpoint:
 
 
 # ---------------------------------------------------------------------------
+# Tools: sentiment
+# ---------------------------------------------------------------------------
+
+_SAMPLE_SENTIMENT = SentimentAnalysis(
+    overall=SentimentType.MIXED,
+    score=0.55,
+    positive_count=1,
+    negative_count=1,
+    neutral_count=0,
+)
+
+
+class TestSentimentEndpoint:
+    @patch(
+        "app.api.routes.tools.analyze_sentiment",
+        new_callable=AsyncMock,
+        return_value=_SAMPLE_SENTIMENT,
+    )
+    @patch("app.api.routes.tools.fetch_news_headlines", return_value=_SAMPLE_NEWS)
+    def test_returns_sentiment(self, mock_news, mock_sentiment):
+        response = client.get("/api/v1/tools/sentiment/AAPL")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["overall"] == "mixed"
+        assert data["score"] == 0.55
+        assert data["positive_count"] == 1
+        assert data["negative_count"] == 1
+        mock_news.assert_called_once_with("AAPL")
+        mock_sentiment.assert_called_once_with(_SAMPLE_NEWS)
+
+    @patch(
+        "app.api.routes.tools.fetch_news_headlines",
+        side_effect=ValueError("NEWS_API_KEY is not configured"),
+    )
+    def test_returns_400_on_value_error(self, mock_fn):
+        response = client.get("/api/v1/tools/sentiment/AAPL")
+        assert response.status_code == 400
+
+    @patch(
+        "app.api.routes.tools.fetch_news_headlines",
+        side_effect=RuntimeError("boom"),
+    )
+    def test_returns_502_on_unexpected_error(self, mock_fn):
+        response = client.get("/api/v1/tools/sentiment/AAPL")
+        assert response.status_code == 502
+
+    @patch(
+        "app.api.routes.tools.analyze_sentiment",
+        new_callable=AsyncMock,
+        side_effect=LLMRateLimitError("rate limit exceeded"),
+    )
+    @patch("app.api.routes.tools.fetch_news_headlines", return_value=_SAMPLE_NEWS)
+    def test_returns_429_on_rate_limit(self, mock_news, mock_sentiment):
+        response = client.get("/api/v1/tools/sentiment/AAPL")
+        assert response.status_code == 429
+        assert "rate limit" in response.json()["detail"].lower()
+
+
+# ---------------------------------------------------------------------------
 # Ticker validation (shared across all tools endpoints)
 # ---------------------------------------------------------------------------
 
@@ -279,6 +340,7 @@ class TestTickerValidation:
             "/api/v1/tools/technicals/",
             "/api/v1/tools/fundamentals/",
             "/api/v1/tools/news/",
+            "/api/v1/tools/sentiment/",
         ],
     )
     @pytest.mark.parametrize("bad_ticker", ["AB CD", "A@#$", "VERYLONGTICKER1"])

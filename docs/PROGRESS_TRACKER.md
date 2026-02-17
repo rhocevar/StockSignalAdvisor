@@ -54,9 +54,9 @@
 ## Week 2: AI Integration
 
 ### Day 8 — LLM Integration
-- [ ] End-to-end LLM calls via provider abstraction
-- [ ] System prompt implementation
-- [ ] JSON mode / structured output handling
+- [x] End-to-end LLM calls via provider abstraction
+- [x] System prompt implementation
+- [x] JSON mode / structured output handling
 
 ### Day 9 — Pinecone Setup
 - [ ] Pinecone index creation script (`scripts/seed_pinecone.py`)
@@ -140,10 +140,10 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
-| Week 2: AI Integration | Not Started | 0/22 |
+| Week 2: AI Integration | In Progress | 3/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **28/68** |
+| **Total** | | **31/68** |
 
 ---
 
-*Last updated: 2026-02-16*
+*Last updated: 2026-02-17*

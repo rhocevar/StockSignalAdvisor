@@ -1,7 +1,7 @@
-from anthropic import AsyncAnthropic
+from anthropic import AsyncAnthropic, RateLimitError
 
 from app.enums import AnthropicModel, ChatMessageRole
-from .base import LLMProvider, ChatMessage, LLMResponse
+from .base import LLMProvider, LLMRateLimitError, ChatMessage, LLMResponse
 
 
 class AnthropicProvider(LLMProvider):
@@ -27,13 +27,16 @@ class AnthropicProvider(LLMProvider):
         if json_mode:
             system = (system or "") + "\n\nRespond with valid JSON only."
 
-        response = await self.client.messages.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            system=system,
-            messages=chat_messages,
-        )
+        try:
+            response = await self.client.messages.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                system=system,
+                messages=chat_messages,
+            )
+        except RateLimitError as e:
+            raise LLMRateLimitError(str(e)) from e
         return LLMResponse(
             content=response.content[0].text,
             model=self.model,
