@@ -1,0 +1,34 @@
+meta {
+  name: Get Fundamental Analysis
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tools/fundamentals/AAPL
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("has PE ratio", function() {
+    expect(res.body).to.have.property("pe_ratio");
+  });
+
+  test("has market cap", function() {
+    expect(res.body.market_cap).to.be.a("number");
+  });
+
+  test("has fundamental score", function() {
+    expect(res.body.fundamental_score).to.be.a("number");
+    expect(res.body.fundamental_score).to.be.at.least(0);
+    expect(res.body.fundamental_score).to.be.at.most(1);
+  });
+
+  test("has insights", function() {
+    expect(res.body.insights).to.be.an("array");
+    expect(res.body.insights.length).to.be.greaterThan(0);
+  });
+}

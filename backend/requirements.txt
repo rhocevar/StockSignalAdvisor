@@ -16,7 +16,7 @@ anthropic==0.18.0
 pinecone-client==3.0.2
 
 # Data Sources
-yfinance==0.2.35
+yfinance==1.2.0
 requests==2.31.0
 
 # Caching

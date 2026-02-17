@@ -1,0 +1,29 @@
+meta {
+  name: Get Stock Price
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tools/stock-price/AAPL
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("has current price", function() {
+    expect(res.body.current).to.be.a("number");
+  });
+
+  test("has currency", function() {
+    expect(res.body.currency).to.be.a("string");
+  });
+
+  test("has change percentages", function() {
+    expect(res.body).to.have.property("change_percent_1d");
+    expect(res.body).to.have.property("change_percent_1w");
+    expect(res.body).to.have.property("change_percent_1m");
+  });
+}

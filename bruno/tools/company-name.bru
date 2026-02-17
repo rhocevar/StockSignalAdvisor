@@ -1,0 +1,23 @@
+meta {
+  name: Get Company Name
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tools/company-name/AAPL
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("returns ticker", function() {
+    expect(res.body.ticker).to.equal("AAPL");
+  });
+
+  test("returns company name", function() {
+    expect(res.body.company_name).to.be.a("string");
+  });
+}

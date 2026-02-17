@@ -34,7 +34,7 @@ def mock_yfinance_info():
         "debtToEquity": 180.0,  # yfinance returns as percentage
         "freeCashflow": 100000000000,
         "operatingCashflow": 120000000000,
-        "dividendYield": 0.005,
+        "dividendYield": 0.5,  # yfinance >=1.0 returns as percentage (0.5 = 0.5%)
         "payoutRatio": 0.15,
         "enterpriseValue": 3100000000000,
         "sharesOutstanding": 15000000000,

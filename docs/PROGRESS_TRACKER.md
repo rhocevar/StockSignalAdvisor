@@ -47,6 +47,7 @@
 - [x] NewsAPI wrapper (`tools/news_fetcher.py`)
 - [x] Headline fetching and formatting
 - [x] Unit tests for news fetcher (14 new tests, 122 total)
+- **Note:** NewsAPI results can be noisy (non-English articles, tangential matches). Consider improving query relevance (e.g., company name + ticker, language filter enforcement) during polish phase.
 
 ---
 

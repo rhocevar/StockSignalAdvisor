@@ -1,0 +1,27 @@
+meta {
+  name: Get News Headlines
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tools/news/AAPL
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("returns array", function() {
+    expect(res.body).to.be.an("array");
+  });
+
+  test("articles have required fields", function() {
+    if (res.body.length > 0) {
+      expect(res.body[0]).to.have.property("title");
+      expect(res.body[0]).to.have.property("type");
+      expect(res.body[0].type).to.equal("news");
+    }
+  });
+}

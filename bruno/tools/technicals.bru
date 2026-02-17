@@ -1,0 +1,38 @@
+meta {
+  name: Get Technical Indicators
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tools/technicals/AAPL
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("has RSI", function() {
+    expect(res.body.rsi).to.be.a("number");
+  });
+
+  test("has RSI interpretation", function() {
+    expect(res.body.rsi_interpretation).to.be.a("string");
+  });
+
+  test("has SMAs", function() {
+    expect(res.body.sma_50).to.be.a("number");
+    expect(res.body.sma_200).to.be.a("number");
+  });
+
+  test("has MACD signal", function() {
+    expect(res.body).to.have.property("macd_signal");
+  });
+
+  test("has technical score", function() {
+    expect(res.body.technical_score).to.be.a("number");
+    expect(res.body.technical_score).to.be.at.least(0);
+    expect(res.body.technical_score).to.be.at.most(1);
+  });
+}

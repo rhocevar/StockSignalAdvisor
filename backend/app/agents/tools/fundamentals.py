@@ -45,8 +45,10 @@ _YFINANCE_FIELD_MAP: list[tuple[str, str]] = [
 
 # Fields needing transformation after extraction from yfinance.
 # yfinance returns debtToEquity as a percentage (e.g. 180 = 1.80x).
+# yfinance >=1.0 returns dividendYield as a percentage (e.g. 0.41 = 0.41%).
 _FIELD_TRANSFORMS: dict[str, Callable[[float], Optional[float]]] = {
     "debt_to_equity": lambda v: v / 100.0,
+    "dividend_yield": lambda v: v / 100.0,
 }
 
 
