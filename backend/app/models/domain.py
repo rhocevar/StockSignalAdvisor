@@ -108,6 +108,14 @@ class NewsSource(BaseModel):
     published_at: datetime | None = None
 
 
+class AgentResult(BaseModel):
+    """Structured output from the LangChain stock analysis agent."""
+
+    signal: SignalType = SignalType.HOLD
+    confidence: float = 0.5
+    explanation: str = ""
+
+
 class AnalysisMetadata(BaseModel):
     model_config = {"protected_namespaces": ()}
 

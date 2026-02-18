@@ -9,7 +9,7 @@
 
 **Stock Signal Advisor** — AI-powered stock analysis app providing Buy/Hold/Sell recommendations.
 - **Frontend:** Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui
-- **Backend:** FastAPI (Python 3.11+) + LangChain + LlamaIndex
+- **Backend:** FastAPI (Python 3.11+) + LangChain + LangGraph
 - **Hosting:** AWS Amplify (frontend) + AWS App Runner (backend)
 
 ## Key Documents
@@ -51,6 +51,7 @@ docs/              → Documentation
 | `providers/vectorstore/` | Swappable vector store abstraction | `base.py` (Document, VectorStoreProvider), `pinecone.py`, `factory.py` |
 | `agents/tools/` | Data fetching + indicator calculations | `stock_data.py` (yfinance wrapper), `technical.py` (RSI, MACD, SMA), `fundamentals.py` (scoring), `sentiment.py` (LLM sentiment) |
 | `agents/prompts.py` | System prompts for LLM calls | `ANALYSIS_SYSTEM_PROMPT` (three-pillar), `SENTIMENT_SYSTEM_PROMPT` (headline classification) |
+| `agents/agent.py` | LangChain ReAct agent | `run_agent(ticker)` → BUY/HOLD/SELL via `create_agent` (LangGraph), 6 tools |
 | `rag/` | RAG pipeline (embed, index, retrieve) | `embeddings.py` (generate_embedding, embed_documents), `indexer.py` (index_documents, delete_documents), `retriever.py` (retrieve, retrieve_context) |
 | `api/routes/` | FastAPI endpoints | `health.py`, `analysis.py` (stub), `tools.py` (individual tool test endpoints + sentiment) |
 | `enums.py` | Central enum definitions | SignalType, MacdSignal, TrendDirection, VolumeTrend, provider types, etc. |

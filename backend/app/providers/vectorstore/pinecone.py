@@ -1,3 +1,4 @@
+import asyncio
 from enum import Enum
 
 from pinecone import Pinecone
@@ -44,8 +45,7 @@ class PineconeProvider(VectorStoreProvider):
             }
             for doc in documents
         ]
-        # TODO: wrap in asyncio.to_thread() when called from async context
-        self.index.upsert(vectors=vectors)
+        await asyncio.to_thread(self.index.upsert, vectors=vectors)
         return len(vectors)
 
     async def search(
@@ -54,7 +54,8 @@ class PineconeProvider(VectorStoreProvider):
         top_k: int = 5,
         filter: dict | None = None,
     ) -> list[SearchResult]:
-        results = self.index.query(
+        results = await asyncio.to_thread(
+            self.index.query,
             vector=query_embedding,
             top_k=top_k,
             include_metadata=True,
@@ -73,5 +74,5 @@ class PineconeProvider(VectorStoreProvider):
         ]
 
     async def delete(self, ids: list[str]) -> int:
-        self.index.delete(ids=ids)
+        await asyncio.to_thread(self.index.delete, ids=ids)
         return len(ids)

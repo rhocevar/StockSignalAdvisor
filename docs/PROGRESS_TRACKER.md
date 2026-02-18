@@ -68,9 +68,11 @@
 - [x] Embedding generation via LLM provider (`rag/embeddings.py`)
 
 ### Day 11 — LangChain Agent
-- [ ] Tool definitions (all 6 tools registered)
-- [ ] Agent configuration with tools
-- [ ] Agent execution and response parsing
+- [x] Tool definitions (all 6 tools registered)
+- [x] Agent configuration with tools
+- [x] Agent execution and response parsing
+- [x] Dependency upgrades (all packages updated to latest stable)
+- [x] Resolved Pinecone TODO (asyncio.to_thread)
 
 ### Day 12 — Orchestrator
 - [ ] `StockAnalysisOrchestrator` class
@@ -140,9 +142,9 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
-| Week 2: AI Integration | In Progress | 8/22 |
+| Week 2: AI Integration | In Progress | 13/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **36/68** |
+| **Total** | | **41/68** |
 
 ---
 
