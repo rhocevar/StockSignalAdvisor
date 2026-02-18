@@ -1,0 +1,35 @@
+meta {
+  name: RAG Search
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tools/rag-search?query=What does RSI indicate?&top_k=5
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("returns array", function() {
+    expect(res.body).to.be.an("array");
+  });
+
+  test("results have required fields", function() {
+    if (res.body.length > 0) {
+      expect(res.body[0]).to.have.property("id");
+      expect(res.body[0]).to.have.property("content");
+      expect(res.body[0]).to.have.property("score");
+      expect(res.body[0].score).to.be.a("number");
+      expect(res.body[0].score).to.be.within(0, 1);
+    }
+  });
+
+  test("results are ordered by score descending", function() {
+    if (res.body.length > 1) {
+      expect(res.body[0].score).to.be.at.least(res.body[1].score);
+    }
+  });
+}

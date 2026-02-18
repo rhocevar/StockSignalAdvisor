@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path, Query
 
 from app.agents.tools.fundamentals import calculate_fundamentals
 from app.agents.tools.news_fetcher import fetch_news_headlines
@@ -8,6 +8,8 @@ from app.agents.tools.sentiment import analyze_sentiment
 from app.agents.tools.stock_data import get_company_name, get_stock_price
 from app.agents.tools.technical import calculate_technicals
 from app.providers.llm.base import LLMRateLimitError
+from app.providers.vectorstore.base import SearchResult
+from app.rag.retriever import retrieve
 from app.models.domain import (
     FundamentalAnalysis,
     NewsSource,
@@ -99,4 +101,22 @@ async def tool_sentiment(ticker: str = TickerPath) -> SentimentAnalysis:
         )
     except Exception as e:
         logger.exception("Failed to analyze sentiment for %s", ticker)
+        raise HTTPException(status_code=502, detail="Upstream data provider error")
+
+
+@router.get("/rag-search", response_model=list[SearchResult])
+async def tool_rag_search(
+    query: str = Query(..., min_length=1, description="Natural language search query"),
+    top_k: int = Query(5, ge=1, le=20, description="Max results to return"),
+) -> list[SearchResult]:
+    """Search the RAG vector store for relevant financial context."""
+    try:
+        return await retrieve(query, top_k=top_k)
+    except LLMRateLimitError:
+        raise HTTPException(
+            status_code=429,
+            detail="LLM provider rate limit exceeded. Please try again later.",
+        )
+    except Exception:
+        logger.exception("RAG search failed for query: %s", query)
         raise HTTPException(status_code=502, detail="Upstream data provider error")

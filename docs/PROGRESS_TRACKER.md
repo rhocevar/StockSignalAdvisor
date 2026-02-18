@@ -63,9 +63,9 @@
 - [x] Embedding generation pipeline
 
 ### Day 10 — RAG Implementation
-- [ ] Document indexer (`rag/indexer.py`)
-- [ ] Semantic search retriever (`rag/retriever.py`)
-- [ ] Embedding generation via LLM provider (`rag/embeddings.py`)
+- [x] Document indexer (`rag/indexer.py`)
+- [x] Semantic search retriever (`rag/retriever.py`)
+- [x] Embedding generation via LLM provider (`rag/embeddings.py`)
 
 ### Day 11 — LangChain Agent
 - [ ] Tool definitions (all 6 tools registered)
@@ -140,9 +140,9 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
-| Week 2: AI Integration | In Progress | 5/22 |
+| Week 2: AI Integration | In Progress | 8/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **33/68** |
+| **Total** | | **36/68** |
 
 ---
 

@@ -32,7 +32,7 @@ backend/app/       → FastAPI application
   agents/tools/    → Data fetching + calculations + sentiment
   agents/prompts.py → System prompts (analysis, sentiment)
   agents/          → LangChain orchestrator (Day 11+)
-  rag/             → Embedding pipeline + RAG retrieval (Day 10+)
+  rag/             → Embedding pipeline + indexer + retriever
   models/          → domain.py, request.py, response.py
   services/        → Caching and shared services
 backend/tests/     → pytest tests (conftest.py for shared fixtures)
@@ -51,7 +51,7 @@ docs/              → Documentation
 | `providers/vectorstore/` | Swappable vector store abstraction | `base.py` (Document, VectorStoreProvider), `pinecone.py`, `factory.py` |
 | `agents/tools/` | Data fetching + indicator calculations | `stock_data.py` (yfinance wrapper), `technical.py` (RSI, MACD, SMA), `fundamentals.py` (scoring), `sentiment.py` (LLM sentiment) |
 | `agents/prompts.py` | System prompts for LLM calls | `ANALYSIS_SYSTEM_PROMPT` (three-pillar), `SENTIMENT_SYSTEM_PROMPT` (headline classification) |
-| `rag/` | Embedding generation + RAG pipeline | `embeddings.py` (generate_embedding, generate_embeddings, embed_documents) |
+| `rag/` | RAG pipeline (embed, index, retrieve) | `embeddings.py` (generate_embedding, embed_documents), `indexer.py` (index_documents, delete_documents), `retriever.py` (retrieve, retrieve_context) |
 | `api/routes/` | FastAPI endpoints | `health.py`, `analysis.py` (stub), `tools.py` (individual tool test endpoints + sentiment) |
 | `enums.py` | Central enum definitions | SignalType, MacdSignal, TrendDirection, VolumeTrend, provider types, etc. |
 | `config.py` | Environment config | pydantic-settings, auto-loads `.env` |

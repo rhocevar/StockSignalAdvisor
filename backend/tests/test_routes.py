@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from app.enums import MacdSignal, SentimentType, SignalType, TrendDirection, VolumeTrend
 from app.main import app
 from app.providers.llm.base import LLMRateLimitError
+from app.providers.vectorstore.base import SearchResult
 from app.models.domain import (
     FundamentalAnalysis,
     NewsSource,
@@ -322,6 +323,85 @@ class TestSentimentEndpoint:
         response = client.get("/api/v1/tools/sentiment/AAPL")
         assert response.status_code == 429
         assert "rate limit" in response.json()["detail"].lower()
+
+
+# ---------------------------------------------------------------------------
+# Tools: rag-search
+# ---------------------------------------------------------------------------
+
+_SAMPLE_SEARCH_RESULTS = [
+    SearchResult(
+        id="ta-rsi-oversold",
+        content="When RSI drops below 30, the stock is oversold.",
+        score=0.92,
+        metadata={"doc_type": "analysis"},
+    ),
+    SearchResult(
+        id="fa-pe-ratio",
+        content="P/E ratio measures how much investors pay per dollar of earnings.",
+        score=0.85,
+        metadata={"doc_type": "analysis"},
+    ),
+]
+
+
+class TestRagSearchEndpoint:
+    @patch(
+        "app.api.routes.tools.retrieve",
+        new_callable=AsyncMock,
+        return_value=_SAMPLE_SEARCH_RESULTS,
+    )
+    def test_returns_search_results(self, mock_retrieve):
+        response = client.get("/api/v1/tools/rag-search?query=RSI+oversold")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        assert data[0]["id"] == "ta-rsi-oversold"
+        assert data[0]["score"] == 0.92
+        assert data[0]["content"] == "When RSI drops below 30, the stock is oversold."
+        mock_retrieve.assert_called_once_with("RSI oversold", top_k=5)
+
+    @patch(
+        "app.api.routes.tools.retrieve",
+        new_callable=AsyncMock,
+        return_value=[],
+    )
+    def test_returns_empty_list(self, mock_retrieve):
+        response = client.get("/api/v1/tools/rag-search?query=obscure+query")
+        assert response.status_code == 200
+        assert response.json() == []
+
+    @patch(
+        "app.api.routes.tools.retrieve",
+        new_callable=AsyncMock,
+        return_value=_SAMPLE_SEARCH_RESULTS[:1],
+    )
+    def test_passes_top_k_parameter(self, mock_retrieve):
+        response = client.get("/api/v1/tools/rag-search?query=RSI&top_k=3")
+        assert response.status_code == 200
+        mock_retrieve.assert_called_once_with("RSI", top_k=3)
+
+    def test_rejects_missing_query(self):
+        response = client.get("/api/v1/tools/rag-search")
+        assert response.status_code == 422
+
+    @patch(
+        "app.api.routes.tools.retrieve",
+        new_callable=AsyncMock,
+        side_effect=LLMRateLimitError("rate limit"),
+    )
+    def test_returns_429_on_rate_limit(self, mock_retrieve):
+        response = client.get("/api/v1/tools/rag-search?query=test")
+        assert response.status_code == 429
+
+    @patch(
+        "app.api.routes.tools.retrieve",
+        new_callable=AsyncMock,
+        side_effect=RuntimeError("boom"),
+    )
+    def test_returns_502_on_unexpected_error(self, mock_retrieve):
+        response = client.get("/api/v1/tools/rag-search?query=test")
+        assert response.status_code == 502
 
 
 # ---------------------------------------------------------------------------
