@@ -59,8 +59,8 @@
 - [x] JSON mode / structured output handling
 
 ### Day 9 — Pinecone Setup
-- [ ] Pinecone index creation script (`scripts/seed_pinecone.py`)
-- [ ] Embedding generation pipeline
+- [x] Pinecone index creation script (`scripts/seed_pinecone.py`)
+- [x] Embedding generation pipeline
 
 ### Day 10 — RAG Implementation
 - [ ] Document indexer (`rag/indexer.py`)
@@ -140,9 +140,9 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
-| Week 2: AI Integration | In Progress | 3/22 |
+| Week 2: AI Integration | In Progress | 5/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **31/68** |
+| **Total** | | **33/68** |
 
 ---
 

@@ -25,18 +25,20 @@ backend/app/       → FastAPI application
   enums.py         → All enums (central, never duplicate)
   config.py        → pydantic-settings (auto-loads .env)
   main.py          → FastAPI entry point
-  api/routes/      → health.py, analysis.py
+  api/routes/      → health.py, analysis.py, tools.py
   providers/       → LLM and vector store abstractions (NEVER bypass these)
     llm/           → base.py, openai.py, anthropic.py, factory.py
     vectorstore/   → base.py, pinecone.py, factory.py
-  agents/tools/    → Data fetching + calculations
+  agents/tools/    → Data fetching + calculations + sentiment
+  agents/prompts.py → System prompts (analysis, sentiment)
   agents/          → LangChain orchestrator (Day 11+)
-  rag/             → LlamaIndex RAG pipeline (Day 10+)
+  rag/             → Embedding pipeline + RAG retrieval (Day 10+)
   models/          → domain.py, request.py, response.py
   services/        → Caching and shared services
 backend/tests/     → pytest tests (conftest.py for shared fixtures)
 bruno/             → API test collections (Bruno)
-scripts/           → Utility scripts
+backend/scripts/   → Utility scripts (seed_pinecone.py)
+scripts/           → Root-level scripts (.gitkeep)
 docs/              → Documentation
 ```
 
@@ -45,10 +47,12 @@ docs/              → Documentation
 | Module | Purpose | Key Files |
 |--------|---------|-----------|
 | `models/` | Pydantic domain, request & response models | `domain.py` (TechnicalAnalysis, FundamentalAnalysis, PriceData, etc.), `request.py`, `response.py` |
-| `providers/llm/` | Swappable LLM abstraction (ABC + factory) | `base.py` (ChatMessage, LLMProvider), `openai.py`, `anthropic.py`, `factory.py` |
+| `providers/llm/` | Swappable LLM abstraction (ABC + factory) | `base.py` (ChatMessage, LLMProvider, LLMRateLimitError), `openai.py`, `anthropic.py`, `factory.py` |
 | `providers/vectorstore/` | Swappable vector store abstraction | `base.py` (Document, VectorStoreProvider), `pinecone.py`, `factory.py` |
-| `agents/tools/` | Data fetching + indicator calculations | `stock_data.py` (yfinance wrapper), `technical.py` (RSI, MACD, SMA), `fundamentals.py` (valuation, profitability, growth, health scoring) |
-| `api/routes/` | FastAPI endpoints | `health.py` (GET /health), `analysis.py` (POST /analyze — stub until Day 12) |
+| `agents/tools/` | Data fetching + indicator calculations | `stock_data.py` (yfinance wrapper), `technical.py` (RSI, MACD, SMA), `fundamentals.py` (scoring), `sentiment.py` (LLM sentiment) |
+| `agents/prompts.py` | System prompts for LLM calls | `ANALYSIS_SYSTEM_PROMPT` (three-pillar), `SENTIMENT_SYSTEM_PROMPT` (headline classification) |
+| `rag/` | Embedding generation + RAG pipeline | `embeddings.py` (generate_embedding, generate_embeddings, embed_documents) |
+| `api/routes/` | FastAPI endpoints | `health.py`, `analysis.py` (stub), `tools.py` (individual tool test endpoints + sentiment) |
 | `enums.py` | Central enum definitions | SignalType, MacdSignal, TrendDirection, VolumeTrend, provider types, etc. |
 | `config.py` | Environment config | pydantic-settings, auto-loads `.env` |
 
