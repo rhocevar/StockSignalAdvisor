@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Path, Query
 from app.agents.tools.fundamentals import calculate_fundamentals
 from app.agents.tools.news_fetcher import fetch_news_headlines
 from app.agents.tools.sentiment import analyze_sentiment
-from app.agents.tools.stock_data import get_company_name, get_stock_price
+from app.agents.tools.stock_data import get_company_name, get_stock_price, get_ticker
 from app.agents.tools.technical import calculate_technicals
 from app.providers.llm.base import LLMRateLimitError
 from app.providers.vectorstore.base import SearchResult
@@ -31,7 +31,8 @@ TickerPath = Path(..., pattern=_TICKER_PATTERN, description="Stock ticker symbol
 def tool_stock_price(ticker: str = TickerPath) -> PriceData:
     """Fetch current price data for a ticker."""
     try:
-        return get_stock_price(ticker.upper())
+        stock = get_ticker(ticker.upper())
+        return get_stock_price(stock)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -43,7 +44,8 @@ def tool_stock_price(ticker: str = TickerPath) -> PriceData:
 def tool_company_name(ticker: str = TickerPath) -> dict:
     """Fetch the company name for a ticker."""
     try:
-        name = get_company_name(ticker.upper())
+        stock = get_ticker(ticker.upper())
+        name = get_company_name(stock)
         return {"ticker": ticker.upper(), "company_name": name}
     except Exception:
         logger.exception("Failed to fetch company name for %s", ticker)
@@ -54,7 +56,8 @@ def tool_company_name(ticker: str = TickerPath) -> dict:
 def tool_technicals(ticker: str = TickerPath) -> TechnicalAnalysis:
     """Calculate technical indicators for a ticker."""
     try:
-        return calculate_technicals(ticker.upper())
+        stock = get_ticker(ticker.upper())
+        return calculate_technicals(stock)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -66,7 +69,8 @@ def tool_technicals(ticker: str = TickerPath) -> TechnicalAnalysis:
 def tool_fundamentals(ticker: str = TickerPath) -> FundamentalAnalysis:
     """Calculate fundamental analysis for a ticker."""
     try:
-        return calculate_fundamentals(ticker.upper())
+        stock = get_ticker(ticker.upper())
+        return calculate_fundamentals(stock)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:

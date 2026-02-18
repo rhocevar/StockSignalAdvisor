@@ -1,4 +1,5 @@
 import pandas as pd
+import yfinance as yf
 
 from app.enums import MacdSignal, TrendDirection, VolumeTrend
 from app.models.domain import TechnicalAnalysis
@@ -153,9 +154,9 @@ def calculate_technical_score(
     return round(score, 4)
 
 
-def calculate_technicals(ticker: str) -> TechnicalAnalysis:
+def calculate_technicals(stock: yf.Ticker) -> TechnicalAnalysis:
     """Orchestrator: fetch price history and compute all technical indicators."""
-    history = get_price_history(ticker)
+    history = get_price_history(stock)
     closes = history["Close"]
     volumes = history["Volume"]
 

@@ -5,19 +5,20 @@ import yfinance as yf
 
 from app.models.domain import PriceData
 
-# TODO(Day 12): Share a single yf.Ticker instance across stock_data, technical,
-# and fundamentals when the orchestrator is built, to avoid redundant API calls.
-
 _YF_TIMEOUT_SECONDS = 10
 
 
-def get_stock_price(ticker: str) -> PriceData:
-    """Fetch current price data for a ticker using yfinance."""
-    stock = yf.Ticker(ticker)
+def get_ticker(ticker: str) -> yf.Ticker:
+    """Create a yf.Ticker instance. The orchestrator calls this once and shares it."""
+    return yf.Ticker(ticker)
+
+
+def get_stock_price(stock: yf.Ticker) -> PriceData:
+    """Fetch current price data using a shared yf.Ticker instance."""
     info = stock.info
 
     if not info or info.get("regularMarketPrice") is None:
-        raise ValueError(f"No price data found for ticker: {ticker}")
+        raise ValueError(f"No price data found for ticker: {stock.ticker}")
 
     current_price = info.get("regularMarketPrice") or info.get("currentPrice")
     history = stock.history(period="1mo", timeout=_YF_TIMEOUT_SECONDS)
@@ -57,19 +58,19 @@ def get_stock_price(ticker: str) -> PriceData:
     )
 
 
-def get_price_history(ticker: str, period: str = "1y") -> pd.DataFrame:
-    """Fetch OHLCV price history for a ticker."""
-    stock = yf.Ticker(ticker)
+def get_price_history(stock: yf.Ticker, period: str = "1y") -> pd.DataFrame:
+    """Fetch OHLCV price history using a shared yf.Ticker instance."""
     history = stock.history(period=period, timeout=_YF_TIMEOUT_SECONDS)
 
     if history.empty:
-        raise ValueError(f"No price history found for ticker: {ticker}")
+        raise ValueError(f"No price history found for ticker: {stock.ticker}")
 
     return history
 
 
-def get_company_name(ticker: str) -> str | None:
+def get_company_name(stock: yf.Ticker) -> str | None:
     """Extract company name from yfinance ticker info."""
-    stock = yf.Ticker(ticker)
     info = stock.info
+    if not info:
+        return None
     return info.get("longName") or info.get("shortName")

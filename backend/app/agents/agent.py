@@ -18,7 +18,7 @@ from app.agents.prompts import ANALYSIS_SYSTEM_PROMPT
 from app.agents.tools.fundamentals import calculate_fundamentals
 from app.agents.tools.news_fetcher import fetch_news_headlines, get_news_headlines
 from app.agents.tools.sentiment import analyze_sentiment
-from app.agents.tools.stock_data import get_stock_price
+from app.agents.tools.stock_data import get_stock_price, get_ticker
 from app.agents.tools.technical import calculate_technicals
 from app.config import settings
 from app.enums import AnthropicModel, LLMProviderType, OpenAIModel, SignalType
@@ -57,7 +57,8 @@ def _get_langchain_llm() -> ChatOpenAI | ChatAnthropic:
 def _tool_get_stock_price(ticker: str) -> str:
     """Fetch current price data for a stock ticker."""
     try:
-        result = get_stock_price(ticker.upper())
+        stock = get_ticker(ticker.upper())
+        result = get_stock_price(stock)
         return result.model_dump_json()
     except Exception as e:
         return f"Error fetching stock price: {e}"
@@ -66,7 +67,8 @@ def _tool_get_stock_price(ticker: str) -> str:
 def _tool_calculate_technicals(ticker: str) -> str:
     """Calculate technical indicators (RSI, SMA, MACD, volume) for a stock ticker."""
     try:
-        result = calculate_technicals(ticker.upper())
+        stock = get_ticker(ticker.upper())
+        result = calculate_technicals(stock)
         return result.model_dump_json()
     except Exception as e:
         return f"Error calculating technicals: {e}"
@@ -75,7 +77,8 @@ def _tool_calculate_technicals(ticker: str) -> str:
 def _tool_get_fundamentals(ticker: str) -> str:
     """Get fundamental analysis (P/E, market cap, margins, growth) for a stock ticker."""
     try:
-        result = calculate_fundamentals(ticker.upper())
+        stock = get_ticker(ticker.upper())
+        result = calculate_fundamentals(stock)
         return result.model_dump_json()
     except Exception as e:
         return f"Error fetching fundamentals: {e}"
@@ -176,7 +179,7 @@ def _parse_agent_output(output: str) -> AgentResult:
     Falls back to HOLD/0.5 if parsing fails.
     """
     try:
-        parsed = json.loads(output)
+        parsed = json.loads(output, strict=False)
         signal_str = parsed.get("signal", SignalType.HOLD.value).upper()
         try:
             signal = SignalType(signal_str)

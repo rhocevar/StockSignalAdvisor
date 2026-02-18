@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -45,6 +45,15 @@ def mock_yfinance_info():
     }
 
 
+@pytest.fixture
+def mock_ticker(mock_yfinance_info):
+    """Create a mock yf.Ticker with info pre-configured."""
+    ticker = MagicMock()
+    ticker.ticker = "AAPL"
+    ticker.info = mock_yfinance_info
+    return ticker
+
+
 # ---- Field Mapping Tests ----
 
 class TestFieldMapping:
@@ -68,13 +77,8 @@ class TestFieldMapping:
 # ---- get_fundamental_metrics Tests ----
 
 class TestGetFundamentalMetrics:
-    @patch("app.agents.tools.fundamentals.yf.Ticker")
-    def test_maps_all_fields(self, mock_ticker_cls, mock_yfinance_info):
-        mock_ticker = MagicMock()
-        mock_ticker.info = mock_yfinance_info
-        mock_ticker_cls.return_value = mock_ticker
-
-        result = get_fundamental_metrics("AAPL")
+    def test_maps_all_fields(self, mock_ticker):
+        result = get_fundamental_metrics(mock_ticker)
 
         assert isinstance(result, FundamentalAnalysis)
         assert result.pe_ratio == 28.5
@@ -87,37 +91,30 @@ class TestGetFundamentalMetrics:
         assert result.analyst_target == 200.0
         assert result.number_of_analysts == 40
 
-    @patch("app.agents.tools.fundamentals.yf.Ticker")
-    def test_debt_to_equity_divided_by_100(self, mock_ticker_cls, mock_yfinance_info):
-        mock_ticker = MagicMock()
-        mock_ticker.info = mock_yfinance_info
-        mock_ticker_cls.return_value = mock_ticker
-
-        result = get_fundamental_metrics("AAPL")
+    def test_debt_to_equity_divided_by_100(self, mock_ticker):
+        result = get_fundamental_metrics(mock_ticker)
 
         assert result.debt_to_equity == 1.80  # 180 / 100
 
-    @patch("app.agents.tools.fundamentals.yf.Ticker")
-    def test_handles_missing_fields(self, mock_ticker_cls):
-        mock_ticker = MagicMock()
-        mock_ticker.info = {"marketCap": 1000000}
-        mock_ticker_cls.return_value = mock_ticker
+    def test_handles_missing_fields(self):
+        ticker = MagicMock()
+        ticker.ticker = "SMALL"
+        ticker.info = {"marketCap": 1000000}
 
-        result = get_fundamental_metrics("SMALL")
+        result = get_fundamental_metrics(ticker)
 
         assert result.pe_ratio is None
         assert result.profit_margin is None
         assert result.revenue_growth is None
         assert result.market_cap == 1000000
 
-    @patch("app.agents.tools.fundamentals.yf.Ticker")
-    def test_raises_for_invalid_ticker(self, mock_ticker_cls):
-        mock_ticker = MagicMock()
-        mock_ticker.info = {}
-        mock_ticker_cls.return_value = mock_ticker
+    def test_raises_for_invalid_ticker(self):
+        ticker = MagicMock()
+        ticker.ticker = "INVALIDTICKER"
+        ticker.info = {}
 
         with pytest.raises(ValueError, match="No fundamental data found"):
-            get_fundamental_metrics("INVALIDTICKER")
+            get_fundamental_metrics(ticker)
 
 
 # ---- interpret_fundamentals Tests ----
@@ -284,13 +281,8 @@ class TestInterpretFundamentalsScoreRange:
 # ---- calculate_fundamentals End-to-End Test ----
 
 class TestCalculateFundamentals:
-    @patch("app.agents.tools.fundamentals.yf.Ticker")
-    def test_returns_scored_analysis(self, mock_ticker_cls, mock_yfinance_info):
-        mock_ticker = MagicMock()
-        mock_ticker.info = mock_yfinance_info
-        mock_ticker_cls.return_value = mock_ticker
-
-        result = calculate_fundamentals("AAPL")
+    def test_returns_scored_analysis(self, mock_ticker):
+        result = calculate_fundamentals(mock_ticker)
 
         assert isinstance(result, FundamentalAnalysis)
         assert result.fundamental_score is not None

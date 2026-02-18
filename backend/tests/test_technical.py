@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -239,8 +239,10 @@ class TestCalculateTechnicals:
     @patch("app.agents.tools.technical.get_price_history")
     def test_returns_technical_analysis(self, mock_get_history, mock_history):
         mock_get_history.return_value = mock_history
+        mock_stock = MagicMock()
+        mock_stock.ticker = "AAPL"
 
-        result = calculate_technicals("AAPL")
+        result = calculate_technicals(mock_stock)
 
         assert isinstance(result, TechnicalAnalysis)
         assert result.rsi is not None
@@ -256,7 +258,9 @@ class TestCalculateTechnicals:
     @patch("app.agents.tools.technical.get_price_history")
     def test_rsi_interpretation_set(self, mock_get_history, mock_history):
         mock_get_history.return_value = mock_history
+        mock_stock = MagicMock()
+        mock_stock.ticker = "AAPL"
 
-        result = calculate_technicals("AAPL")
+        result = calculate_technicals(mock_stock)
 
         assert result.rsi_interpretation in ("oversold", "overbought", "neutral")

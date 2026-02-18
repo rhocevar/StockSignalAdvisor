@@ -52,8 +52,10 @@ docs/              → Documentation
 | `agents/tools/` | Data fetching + indicator calculations | `stock_data.py` (yfinance wrapper), `technical.py` (RSI, MACD, SMA), `fundamentals.py` (scoring), `sentiment.py` (LLM sentiment) |
 | `agents/prompts.py` | System prompts for LLM calls | `ANALYSIS_SYSTEM_PROMPT` (three-pillar), `SENTIMENT_SYSTEM_PROMPT` (headline classification) |
 | `agents/agent.py` | LangChain ReAct agent | `run_agent(ticker)` → BUY/HOLD/SELL via `create_agent` (LangGraph), 6 tools |
+| `agents/orchestrator.py` | Analysis orchestrator | `StockAnalysisOrchestrator.analyze()` — parallel data gathering, shared yf.Ticker, dynamic pillar reweighting, caching |
+| `services/cache.py` | TTL cache | `get_cached()`, `set_cached()`, `clear_cache()` — cachetools.TTLCache keyed by ticker |
 | `rag/` | RAG pipeline (embed, index, retrieve) | `embeddings.py` (generate_embedding, embed_documents), `indexer.py` (index_documents, delete_documents), `retriever.py` (retrieve, retrieve_context) |
-| `api/routes/` | FastAPI endpoints | `health.py`, `analysis.py` (stub), `tools.py` (individual tool test endpoints + sentiment) |
+| `api/routes/` | FastAPI endpoints | `health.py`, `analysis.py` (wired to orchestrator), `tools.py` (individual tool test endpoints + sentiment) |
 | `enums.py` | Central enum definitions | SignalType, MacdSignal, TrendDirection, VolumeTrend, provider types, etc. |
 | `config.py` | Environment config | pydantic-settings, auto-loads `.env` |
 
@@ -85,7 +87,7 @@ docs/              → Documentation
 
 1. **Provider abstraction is mandatory** — all LLM calls go through `providers/llm/base.py` interface, all vector store calls through `providers/vectorstore/base.py`
 2. **Factory pattern for providers** — use `factory.py` to instantiate, driven by config
-3. **Three analysis pillars** — Technical (35%), Fundamental (35%), Sentiment (30%)
+3. **Three analysis pillars** — Technical (40%), Fundamental (40%), Sentiment (20%) — dynamic reweighting when pillars unavailable
 4. **Cache aggressively** — use TTL-based in-memory cache for API responses
 5. **Enums are centralized** — all in `app/enums.py`, used in models, providers, and factories
 

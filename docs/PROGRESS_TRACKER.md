@@ -75,10 +75,12 @@
 - [x] Resolved Pinecone TODO (asyncio.to_thread)
 
 ### Day 12 — Orchestrator
-- [ ] `StockAnalysisOrchestrator` class
-- [ ] Full analysis pipeline (technical + fundamental + sentiment)
-- [ ] In-memory TTL caching (`services/cache.py`)
-- [ ] `POST /api/v1/analyze` endpoint wired up
+- [x] `StockAnalysisOrchestrator` class
+- [x] Full analysis pipeline (technical + fundamental + sentiment)
+- [x] In-memory TTL caching (`services/cache.py`)
+- [x] `POST /api/v1/analyze` endpoint wired up
+- [x] Shared `yf.Ticker` instance across tools (resolved stock_data.py TODO)
+- [x] Dynamic pillar reweighting (40/40/20, 70/30, 60/40, 100)
 
 ### Day 13 — Frontend Setup
 - [ ] Next.js 14 app initialized (App Router)
@@ -142,10 +144,10 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
-| Week 2: AI Integration | In Progress | 13/22 |
+| Week 2: AI Integration | In Progress | 17/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **41/68** |
+| **Total** | | **45/68** |
 
 ---
 
-*Last updated: 2026-02-17*
+*Last updated: 2026-02-18*

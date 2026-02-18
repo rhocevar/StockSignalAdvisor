@@ -11,12 +11,15 @@ from app.main import app
 from app.providers.llm.base import LLMRateLimitError
 from app.providers.vectorstore.base import SearchResult
 from app.models.domain import (
+    AnalysisMetadata,
+    AnalysisResult,
     FundamentalAnalysis,
     NewsSource,
     PriceData,
     SentimentAnalysis,
     TechnicalAnalysis,
 )
+from app.models.response import AnalyzeResponse
 
 client = TestClient(app)
 
@@ -45,27 +48,57 @@ class TestHealthEndpoint:
 
 
 # ---------------------------------------------------------------------------
-# Analysis endpoint (stub)
+# Analysis endpoint
 # ---------------------------------------------------------------------------
+
+_SAMPLE_ANALYZE_RESPONSE = AnalyzeResponse(
+    ticker="AAPL",
+    company_name="Apple Inc.",
+    signal=SignalType.BUY,
+    confidence=0.75,
+    explanation="Strong outlook.",
+    analysis=AnalysisResult(),
+    metadata=AnalysisMetadata(
+        generated_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        llm_provider="openai",
+        model_used="gpt-4o-mini",
+        vectorstore_provider="pinecone",
+    ),
+)
 
 
 class TestAnalyzeEndpoint:
-    def test_analyze_returns_200(self):
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        return_value=_SAMPLE_ANALYZE_RESPONSE,
+    )
+    def test_analyze_returns_200(self, mock_analyze):
         response = client.post("/api/v1/analyze", json={"ticker": "AAPL"})
         assert response.status_code == 200
 
-    def test_analyze_response_structure(self):
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        return_value=_SAMPLE_ANALYZE_RESPONSE,
+    )
+    def test_analyze_response_structure(self, mock_analyze):
         data = client.post("/api/v1/analyze", json={"ticker": "AAPL"}).json()
         assert data["ticker"] == "AAPL"
-        assert data["signal"] == SignalType.HOLD.value
-        assert data["confidence"] == 0.5
+        assert data["signal"] == SignalType.BUY.value
+        assert data["confidence"] == 0.75
         assert "explanation" in data
         assert "analysis" in data
         assert "metadata" in data
 
-    def test_analyze_uppercases_ticker(self):
-        data = client.post("/api/v1/analyze", json={"ticker": "aapl"}).json()
-        assert data["ticker"] == "AAPL"
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        return_value=_SAMPLE_ANALYZE_RESPONSE,
+    )
+    def test_analyze_calls_orchestrator(self, mock_analyze):
+        client.post("/api/v1/analyze", json={"ticker": "aapl"})
+        mock_analyze.assert_called_once()
 
     def test_analyze_missing_ticker(self):
         response = client.post("/api/v1/analyze", json={})
@@ -86,21 +119,23 @@ _SAMPLE_PRICE = PriceData(
 
 class TestStockPriceEndpoint:
     @patch("app.api.routes.tools.get_stock_price", return_value=_SAMPLE_PRICE)
-    def test_returns_price_data(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_price_data(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/stock-price/AAPL")
         assert response.status_code == 200
         data = response.json()
         assert data["current"] == 150.0
         assert data["change_percent_1d"] == -1.5
-        mock_fn.assert_called_once_with("AAPL")
 
     @patch("app.api.routes.tools.get_stock_price", side_effect=ValueError("No data"))
-    def test_returns_404_on_value_error(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_404_on_value_error(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/stock-price/INVALID")
         assert response.status_code == 404
 
     @patch("app.api.routes.tools.get_stock_price", side_effect=RuntimeError("boom"))
-    def test_returns_502_on_unexpected_error(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_502_on_unexpected_error(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/stock-price/AAPL")
         assert response.status_code == 502
         assert response.json()["detail"] == "Upstream data provider error"
@@ -117,7 +152,8 @@ class TestStockPriceEndpoint:
 
 class TestCompanyNameEndpoint:
     @patch("app.api.routes.tools.get_company_name", return_value="Apple Inc.")
-    def test_returns_company_name(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_company_name(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/company-name/AAPL")
         assert response.status_code == 200
         data = response.json()
@@ -125,13 +161,15 @@ class TestCompanyNameEndpoint:
         assert data["company_name"] == "Apple Inc."
 
     @patch("app.api.routes.tools.get_company_name", return_value=None)
-    def test_returns_null_when_unknown(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_null_when_unknown(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/company-name/XYZ")
         assert response.status_code == 200
         assert response.json()["company_name"] is None
 
     @patch("app.api.routes.tools.get_company_name", side_effect=RuntimeError("boom"))
-    def test_returns_502_on_error(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_502_on_error(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/company-name/AAPL")
         assert response.status_code == 502
 
@@ -155,7 +193,8 @@ _SAMPLE_TECHNICALS = TechnicalAnalysis(
 
 class TestTechnicalsEndpoint:
     @patch("app.api.routes.tools.calculate_technicals", return_value=_SAMPLE_TECHNICALS)
-    def test_returns_technicals(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_technicals(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/technicals/AAPL")
         assert response.status_code == 200
         data = response.json()
@@ -163,12 +202,14 @@ class TestTechnicalsEndpoint:
         assert data["technical_score"] == 0.75
 
     @patch("app.api.routes.tools.calculate_technicals", side_effect=ValueError("No data"))
-    def test_returns_404_on_value_error(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_404_on_value_error(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/technicals/INVALID")
         assert response.status_code == 404
 
     @patch("app.api.routes.tools.calculate_technicals", side_effect=RuntimeError("boom"))
-    def test_returns_502_on_unexpected_error(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_502_on_unexpected_error(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/technicals/AAPL")
         assert response.status_code == 502
 
@@ -189,7 +230,8 @@ class TestFundamentalsEndpoint:
         "app.api.routes.tools.calculate_fundamentals",
         return_value=_SAMPLE_FUNDAMENTALS,
     )
-    def test_returns_fundamentals(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_fundamentals(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/fundamentals/AAPL")
         assert response.status_code == 200
         data = response.json()
@@ -200,7 +242,8 @@ class TestFundamentalsEndpoint:
         "app.api.routes.tools.calculate_fundamentals",
         side_effect=ValueError("No data"),
     )
-    def test_returns_404_on_value_error(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_404_on_value_error(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/fundamentals/INVALID")
         assert response.status_code == 404
 
@@ -208,7 +251,8 @@ class TestFundamentalsEndpoint:
         "app.api.routes.tools.calculate_fundamentals",
         side_effect=RuntimeError("boom"),
     )
-    def test_returns_502_on_unexpected_error(self, mock_fn):
+    @patch("app.api.routes.tools.get_ticker")
+    def test_returns_502_on_unexpected_error(self, mock_get_ticker, mock_fn):
         response = client.get("/api/v1/tools/fundamentals/AAPL")
         assert response.status_code == 502
 

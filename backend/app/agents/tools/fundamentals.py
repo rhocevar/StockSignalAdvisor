@@ -52,13 +52,12 @@ _FIELD_TRANSFORMS: dict[str, Callable[[float], float | None]] = {
 }
 
 
-def get_fundamental_metrics(ticker: str) -> FundamentalAnalysis:
-    """Fetch fundamental metrics for a ticker from yfinance."""
-    stock = yf.Ticker(ticker)
+def get_fundamental_metrics(stock: yf.Ticker) -> FundamentalAnalysis:
+    """Fetch fundamental metrics from a shared yf.Ticker instance."""
     info = stock.info
 
     if not info or info.get("marketCap") is None:
-        raise ValueError(f"No fundamental data found for ticker: {ticker}")
+        raise ValueError(f"No fundamental data found for ticker: {stock.ticker}")
 
     data: dict = {}
     for yf_key, field_name in _YFINANCE_FIELD_MAP:
@@ -245,9 +244,9 @@ def interpret_fundamentals(metrics: FundamentalAnalysis) -> FundamentalInterpret
     )
 
 
-def calculate_fundamentals(ticker: str) -> FundamentalAnalysis:
+def calculate_fundamentals(stock: yf.Ticker) -> FundamentalAnalysis:
     """Orchestrator: fetch fundamental metrics, interpret, and return scored analysis."""
-    metrics = get_fundamental_metrics(ticker)
+    metrics = get_fundamental_metrics(stock)
     interpretation = interpret_fundamentals(metrics)
 
     metrics.fundamental_score = interpretation.score

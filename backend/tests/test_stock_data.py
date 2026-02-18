@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
@@ -7,6 +7,7 @@ from app.agents.tools.stock_data import (
     get_company_name,
     get_price_history,
     get_stock_price,
+    get_ticker,
 )
 from app.models.domain import PriceData
 
@@ -38,15 +39,25 @@ def mock_price_history():
     )
 
 
-class TestGetStockPrice:
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_returns_price_data(self, mock_ticker_cls, mock_stock_info, mock_price_history):
-        mock_ticker = MagicMock()
-        mock_ticker.info = mock_stock_info
-        mock_ticker.history.return_value = mock_price_history
-        mock_ticker_cls.return_value = mock_ticker
+@pytest.fixture
+def mock_ticker(mock_stock_info, mock_price_history):
+    """Create a mock yf.Ticker with info and history pre-configured."""
+    ticker = MagicMock()
+    ticker.ticker = "AAPL"
+    ticker.info = mock_stock_info
+    ticker.history.return_value = mock_price_history
+    return ticker
 
-        result = get_stock_price("AAPL")
+
+class TestGetTicker:
+    def test_returns_yf_ticker(self):
+        result = get_ticker("AAPL")
+        assert result.ticker == "AAPL"
+
+
+class TestGetStockPrice:
+    def test_returns_price_data(self, mock_ticker):
+        result = get_stock_price(mock_ticker)
 
         assert isinstance(result, PriceData)
         assert result.current == 150.0
@@ -54,36 +65,28 @@ class TestGetStockPrice:
         assert result.high_52w == 180.0
         assert result.low_52w == 120.0
 
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_calculates_change_percentages(self, mock_ticker_cls, mock_stock_info, mock_price_history):
-        mock_ticker = MagicMock()
-        mock_ticker.info = mock_stock_info
-        mock_ticker.history.return_value = mock_price_history
-        mock_ticker_cls.return_value = mock_ticker
-
-        result = get_stock_price("AAPL")
+    def test_calculates_change_percentages(self, mock_ticker):
+        result = get_stock_price(mock_ticker)
 
         assert result.change_percent_1d is not None
         assert result.change_percent_1w is not None
         assert result.change_percent_1m is not None
 
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_raises_for_invalid_ticker(self, mock_ticker_cls):
-        mock_ticker = MagicMock()
-        mock_ticker.info = {}
-        mock_ticker_cls.return_value = mock_ticker
+    def test_raises_for_invalid_ticker(self):
+        ticker = MagicMock()
+        ticker.ticker = "INVALIDTICKER"
+        ticker.info = {}
 
         with pytest.raises(ValueError, match="No price data found"):
-            get_stock_price("INVALIDTICKER")
+            get_stock_price(ticker)
 
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_handles_empty_history(self, mock_ticker_cls, mock_stock_info):
-        mock_ticker = MagicMock()
-        mock_ticker.info = mock_stock_info
-        mock_ticker.history.return_value = pd.DataFrame()
-        mock_ticker_cls.return_value = mock_ticker
+    def test_handles_empty_history(self, mock_stock_info):
+        ticker = MagicMock()
+        ticker.ticker = "AAPL"
+        ticker.info = mock_stock_info
+        ticker.history.return_value = pd.DataFrame()
 
-        result = get_stock_price("AAPL")
+        result = get_stock_price(ticker)
 
         assert result.current == 150.0
         assert result.change_percent_1d is None
@@ -92,13 +95,8 @@ class TestGetStockPrice:
 
 
 class TestGetPriceHistory:
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_returns_dataframe(self, mock_ticker_cls, mock_price_history):
-        mock_ticker = MagicMock()
-        mock_ticker.history.return_value = mock_price_history
-        mock_ticker_cls.return_value = mock_ticker
-
-        result = get_price_history("AAPL")
+    def test_returns_dataframe(self, mock_ticker):
+        result = get_price_history(mock_ticker)
 
         assert isinstance(result, pd.DataFrame)
         assert "Open" in result.columns
@@ -108,43 +106,33 @@ class TestGetPriceHistory:
         assert "Volume" in result.columns
         assert len(result) == 30
 
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_raises_for_empty_history(self, mock_ticker_cls):
-        mock_ticker = MagicMock()
-        mock_ticker.history.return_value = pd.DataFrame()
-        mock_ticker_cls.return_value = mock_ticker
+    def test_raises_for_empty_history(self):
+        ticker = MagicMock()
+        ticker.ticker = "INVALIDTICKER"
+        ticker.history.return_value = pd.DataFrame()
 
         with pytest.raises(ValueError, match="No price history found"):
-            get_price_history("INVALIDTICKER")
+            get_price_history(ticker)
 
 
 class TestGetCompanyName:
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_returns_long_name(self, mock_ticker_cls, mock_stock_info):
-        mock_ticker = MagicMock()
-        mock_ticker.info = mock_stock_info
-        mock_ticker_cls.return_value = mock_ticker
-
-        result = get_company_name("AAPL")
+    def test_returns_long_name(self, mock_ticker):
+        result = get_company_name(mock_ticker)
 
         assert result == "Apple Inc."
 
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_falls_back_to_short_name(self, mock_ticker_cls):
-        mock_ticker = MagicMock()
-        mock_ticker.info = {"shortName": "AAPL"}
-        mock_ticker_cls.return_value = mock_ticker
+    def test_falls_back_to_short_name(self):
+        ticker = MagicMock()
+        ticker.info = {"shortName": "AAPL"}
 
-        result = get_company_name("AAPL")
+        result = get_company_name(ticker)
 
         assert result == "AAPL"
 
-    @patch("app.agents.tools.stock_data.yf.Ticker")
-    def test_returns_none_for_missing_name(self, mock_ticker_cls):
-        mock_ticker = MagicMock()
-        mock_ticker.info = {}
-        mock_ticker_cls.return_value = mock_ticker
+    def test_returns_none_for_missing_name(self):
+        ticker = MagicMock()
+        ticker.info = {}
 
-        result = get_company_name("UNKNOWN")
+        result = get_company_name(ticker)
 
         assert result is None

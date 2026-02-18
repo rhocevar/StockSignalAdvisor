@@ -101,17 +101,23 @@ class TestParseAgentOutput:
 
 class TestToolWrappers:
     @patch("app.agents.agent.get_stock_price")
-    def test_stock_price_wrapper_returns_json(self, mock_fn):
+    @patch("app.agents.agent.get_ticker")
+    def test_stock_price_wrapper_returns_json(self, mock_get_ticker, mock_fn):
+        mock_stock = MagicMock()
+        mock_get_ticker.return_value = mock_stock
         mock_fn.return_value = MagicMock(model_dump_json=MagicMock(return_value='{"current":150}'))
 
         from app.agents.agent import _tool_get_stock_price
 
         result = _tool_get_stock_price("AAPL")
         assert result == '{"current":150}'
-        mock_fn.assert_called_once_with("AAPL")
+        mock_fn.assert_called_once_with(mock_stock)
 
     @patch("app.agents.agent.get_stock_price", side_effect=ValueError("No data"))
-    def test_stock_price_wrapper_handles_error(self, mock_fn):
+    @patch("app.agents.agent.get_ticker")
+    def test_stock_price_wrapper_handles_error(self, mock_get_ticker, mock_fn):
+        mock_get_ticker.return_value = MagicMock()
+
         from app.agents.agent import _tool_get_stock_price
 
         result = _tool_get_stock_price("INVALID")
@@ -119,7 +125,10 @@ class TestToolWrappers:
         assert "No data" in result
 
     @patch("app.agents.agent.calculate_technicals")
-    def test_technicals_wrapper_returns_json(self, mock_fn):
+    @patch("app.agents.agent.get_ticker")
+    def test_technicals_wrapper_returns_json(self, mock_get_ticker, mock_fn):
+        mock_stock = MagicMock()
+        mock_get_ticker.return_value = mock_stock
         mock_fn.return_value = MagicMock(model_dump_json=MagicMock(return_value='{"rsi":55}'))
 
         from app.agents.agent import _tool_calculate_technicals
@@ -128,7 +137,10 @@ class TestToolWrappers:
         assert result == '{"rsi":55}'
 
     @patch("app.agents.agent.calculate_fundamentals")
-    def test_fundamentals_wrapper_returns_json(self, mock_fn):
+    @patch("app.agents.agent.get_ticker")
+    def test_fundamentals_wrapper_returns_json(self, mock_get_ticker, mock_fn):
+        mock_stock = MagicMock()
+        mock_get_ticker.return_value = mock_stock
         mock_fn.return_value = MagicMock(model_dump_json=MagicMock(return_value='{"pe_ratio":25}'))
 
         from app.agents.agent import _tool_get_fundamentals
