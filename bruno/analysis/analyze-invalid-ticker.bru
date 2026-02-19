@@ -1,0 +1,26 @@
+meta {
+  name: Analyze Invalid Ticker (404)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/analyze
+  body: json
+}
+
+body:json {
+  {
+    "ticker": "XYZINVALID"
+  }
+}
+
+tests {
+  test("returns 404 for unknown ticker", function() {
+    expect(res.status).to.equal(404);
+  });
+
+  test("detail contains 'not found'", function() {
+    expect(res.body.detail.toLowerCase()).to.include("not found");
+  });
+}

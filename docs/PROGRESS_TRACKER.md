@@ -123,10 +123,10 @@
 - [x] Edge cases (invalid ticker, API failures, rate limits)
 
 ### Day 17 — Testing
-- [ ] Backend unit tests (providers, tools, agents)
-- [ ] Backend integration tests (full analysis pipeline)
-- [ ] Frontend component tests
-- [ ] Bruno API test collection
+- [x] Backend unit tests (providers, tools, agents)
+- [x] Backend integration tests (full analysis pipeline)
+- [x] Frontend component tests
+- [x] Bruno API test collection
 
 ### Day 18 — AWS Setup
 - [ ] AWS App Runner configuration
@@ -154,9 +154,9 @@
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
 | Week 2: AI Integration | Complete | 22/22 |
-| Week 3: Polish & Deploy | In Progress | 19/22 |
-| **Total** | | **69/72** |
+| Week 3: Polish & Deploy | In Progress | 23/26 |
+| **Total** | | **73/76** |
 
 ---
 
-*Last updated: 2026-02-20*
+*Last updated: 2026-02-19*
