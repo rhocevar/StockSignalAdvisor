@@ -94,13 +94,16 @@
 - [x] Vercel Agent Skills installed (react-best-practices, composition-patterns, web-design-guidelines)
 
 ### Day 14 — Core UI Components
-- [ ] TickerInput component (search/autocomplete)
-- [ ] SignalCard component (Buy/Hold/Sell display)
-- [ ] SignalBadge component (colored indicator)
-- [ ] ExplanationPanel component
-- [ ] SourcesList component
-- [ ] LoadingState component
-- [ ] Disclaimer component
+- [x] TickerInput component (search/autocomplete)
+- [x] SignalCard component (Buy/Hold/Sell display)
+- [x] SignalBadge component (colored indicator)
+- [x] ExplanationPanel component
+- [x] SourcesList component
+- [x] LoadingState component
+- [x] Disclaimer component
+- [x] AnalysisView component (Client Component orchestrating full results page)
+- [x] Home page wired with TickerInput
+- [x] `/analyze/[ticker]` page wired with AnalysisView
 
 ---
 
@@ -149,9 +152,9 @@
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
 | Week 2: AI Integration | Complete | 22/22 |
-| Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **50/68** |
+| Week 3: Polish & Deploy | In Progress | 10/18 |
+| **Total** | | **60/68** |
 
 ---
 
-*Last updated: 2026-02-19*
+*Last updated: 2026-02-20*
