@@ -65,7 +65,7 @@ class TestAnalyzeSentiment:
         from app.agents.tools.sentiment import analyze_sentiment
 
         headlines = _make_headlines(3)
-        result = await analyze_sentiment(headlines)
+        result, _ = await analyze_sentiment(headlines)
 
         assert isinstance(result, SentimentAnalysis)
         assert result.overall == SentimentType.MIXED
@@ -78,13 +78,14 @@ class TestAnalyzeSentiment:
     async def test_empty_headlines_returns_neutral(self):
         from app.agents.tools.sentiment import analyze_sentiment
 
-        result = await analyze_sentiment([])
+        result, updated = await analyze_sentiment([])
 
         assert result.overall == SentimentType.NEUTRAL
         assert result.score == 0.5
         assert result.positive_count == 0
         assert result.negative_count == 0
         assert result.neutral_count == 0
+        assert updated == []
 
     @pytest.mark.asyncio
     @patch("app.agents.tools.sentiment.get_llm_provider")
@@ -96,17 +97,20 @@ class TestAnalyzeSentiment:
 
     @pytest.mark.asyncio
     @patch("app.agents.tools.sentiment.get_llm_provider")
-    async def test_updates_headline_sentiments_in_place(self, mock_factory):
+    async def test_returns_updated_headlines(self, mock_factory):
         mock_factory.return_value = _make_provider(_HAPPY_RESPONSE)
 
         from app.agents.tools.sentiment import analyze_sentiment
 
         headlines = _make_headlines(3)
-        await analyze_sentiment(headlines)
+        _, updated = await analyze_sentiment(headlines)
 
-        assert headlines[0].sentiment == SentimentType.POSITIVE
-        assert headlines[1].sentiment == SentimentType.NEGATIVE
-        assert headlines[2].sentiment == SentimentType.NEUTRAL
+        # Original list must not be mutated
+        assert all(h.sentiment is None for h in headlines)
+        # Returned list has per-headline sentiments populated
+        assert updated[0].sentiment == SentimentType.POSITIVE
+        assert updated[1].sentiment == SentimentType.NEGATIVE
+        assert updated[2].sentiment == SentimentType.NEUTRAL
 
     @pytest.mark.asyncio
     @patch("app.agents.tools.sentiment.get_llm_provider")
@@ -123,7 +127,7 @@ class TestAnalyzeSentiment:
 
         from app.agents.tools.sentiment import analyze_sentiment
 
-        result = await analyze_sentiment(_make_headlines(2))
+        result, _ = await analyze_sentiment(_make_headlines(2))
 
         assert result.overall == SentimentType.NEUTRAL
         assert result.score == 0.5
@@ -140,7 +144,7 @@ class TestAnalyzeSentiment:
 
         from app.agents.tools.sentiment import analyze_sentiment
 
-        result = await analyze_sentiment(_make_headlines(1))
+        result, _ = await analyze_sentiment(_make_headlines(1))
         assert result.score == 0.5
 
     @pytest.mark.asyncio
@@ -155,7 +159,7 @@ class TestAnalyzeSentiment:
 
         from app.agents.tools.sentiment import analyze_sentiment
 
-        result = await analyze_sentiment(_make_headlines(1))
+        result, _ = await analyze_sentiment(_make_headlines(1))
         assert result.score == 0.5
 
     @pytest.mark.asyncio
@@ -173,7 +177,7 @@ class TestAnalyzeSentiment:
 
         from app.agents.tools.sentiment import analyze_sentiment
 
-        result = await analyze_sentiment(_make_headlines(2))
+        result, _ = await analyze_sentiment(_make_headlines(2))
 
         assert result.overall == SentimentType.POSITIVE
         assert result.score == 0.85
@@ -196,9 +200,9 @@ class TestAnalyzeSentiment:
         from app.agents.tools.sentiment import analyze_sentiment
 
         headlines = _make_headlines(1)
-        result = await analyze_sentiment(headlines)
+        result, updated = await analyze_sentiment(headlines)
 
-        assert headlines[0].sentiment == SentimentType.POSITIVE
+        assert updated[0].sentiment == SentimentType.POSITIVE
         assert result.positive_count == 1
         assert result.negative_count == 1
 
@@ -215,9 +219,9 @@ class TestAnalyzeSentiment:
         from app.agents.tools.sentiment import analyze_sentiment
 
         headlines = _make_headlines(1)
-        result = await analyze_sentiment(headlines)
+        result, updated = await analyze_sentiment(headlines)
 
-        assert headlines[0].sentiment == SentimentType.NEUTRAL
+        assert updated[0].sentiment == SentimentType.NEUTRAL
         assert result.neutral_count == 1
 
 

@@ -327,7 +327,7 @@ class TestSentimentEndpoint:
     @patch(
         "app.api.routes.tools.analyze_sentiment",
         new_callable=AsyncMock,
-        return_value=_SAMPLE_SENTIMENT,
+        return_value=(_SAMPLE_SENTIMENT, []),
     )
     @patch("app.api.routes.tools.fetch_news_headlines", return_value=_SAMPLE_NEWS)
     def test_returns_sentiment(self, mock_news, mock_sentiment):

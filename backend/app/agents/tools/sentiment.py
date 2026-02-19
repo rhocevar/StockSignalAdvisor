@@ -20,6 +20,9 @@ _NEUTRAL_FALLBACK = SentimentAnalysis(
     neutral_count=0,
 )
 
+# Return type alias for readability
+SentimentResult = tuple[SentimentAnalysis, list[NewsSource]]
+
 _SENTIMENT_MAP = {
     "positive": SentimentType.POSITIVE,
     "negative": SentimentType.NEGATIVE,
@@ -30,14 +33,15 @@ _SENTIMENT_MAP = {
 
 async def analyze_sentiment(
     headlines: list[NewsSource],
-) -> SentimentAnalysis:
+) -> SentimentResult:
     """Classify news headlines via LLM and return aggregated sentiment.
 
-    Each ``NewsSource.sentiment`` is updated in-place with the per-headline
-    classification returned by the LLM.
+    Returns a tuple of (SentimentAnalysis, updated_headlines) where each
+    NewsSource in updated_headlines has its sentiment field populated.
+    The original list is not mutated.
     """
     if not headlines:
-        return _NEUTRAL_FALLBACK.model_copy()
+        return _NEUTRAL_FALLBACK.model_copy(), []
 
     numbered = "\n".join(
         f"{i}. {h.title}" for i, h in enumerate(headlines)
@@ -59,9 +63,10 @@ async def analyze_sentiment(
         data = json.loads(response.content)
     except (json.JSONDecodeError, TypeError):
         logger.warning("Failed to parse sentiment LLM response as JSON")
-        return _NEUTRAL_FALLBACK.model_copy()
+        return _NEUTRAL_FALLBACK.model_copy(), list(headlines)
 
-    # Count per-headline sentiments and update NewsSource objects in-place
+    # Build updated copies of each NewsSource with per-headline sentiments
+    updated: list[NewsSource] = list(headlines)
     positive = 0
     negative = 0
     neutral = 0
@@ -78,8 +83,8 @@ async def analyze_sentiment(
         else:
             neutral += 1
 
-        if isinstance(idx, int) and 0 <= idx < len(headlines):
-            headlines[idx].sentiment = sentiment_type
+        if isinstance(idx, int) and 0 <= idx < len(updated):
+            updated[idx] = updated[idx].model_copy(update={"sentiment": sentiment_type})
 
     overall_raw = data.get("overall", "neutral").lower()
     overall = _SENTIMENT_MAP.get(overall_raw, SentimentType.NEUTRAL)
@@ -88,10 +93,11 @@ async def analyze_sentiment(
     if not isinstance(score, (int, float)) or score < 0 or score > 1:
         score = 0.5
 
-    return SentimentAnalysis(
+    analysis = SentimentAnalysis(
         overall=overall,
         score=round(float(score), 4),
         positive_count=positive,
         negative_count=negative,
         neutral_count=neutral,
     )
+    return analysis, updated

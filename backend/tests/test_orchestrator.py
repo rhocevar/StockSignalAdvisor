@@ -98,7 +98,7 @@ def _patch_all(
         "analyze_sentiment": patch(
             "app.agents.orchestrator.analyze_sentiment",
             new_callable=AsyncMock,
-            return_value=sentiment,
+            return_value=(sentiment, headlines or []),
         ),
         "run_agent": patch(
             "app.agents.orchestrator.run_agent",

@@ -16,6 +16,10 @@ interface AnalysisViewProps {
 export function AnalysisView({ ticker }: AnalysisViewProps) {
   const { mutate, isPending, data, error } = useAnalysis();
 
+  // useMutation state is not persisted between component mounts, so we must
+  // allow mutate to fire on every mount. React StrictMode double-invokes this
+  // effect in development, causing two requests — but the backend TTL cache
+  // absorbs the duplicate immediately, making it harmless.
   useEffect(() => {
     mutate({ ticker });
   }, [ticker, mutate]);

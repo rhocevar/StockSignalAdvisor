@@ -114,6 +114,7 @@
 - [ ] TechnicalIndicators component
 - [ ] FundamentalsCard component
 - [ ] Analysis results page (`/analyze/[ticker]`)
+- [ ] 52-week high/low display in SignalCard
 
 ### Day 16 — Error Handling
 - [ ] Backend error handling (graceful failures, proper HTTP codes)

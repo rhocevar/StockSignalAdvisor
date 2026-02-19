@@ -134,7 +134,7 @@ class StockAnalysisOrchestrator:
         sentiment: SentimentAnalysis | None = None
         if headlines:
             try:
-                sentiment = await analyze_sentiment(headlines)
+                sentiment, headlines = await analyze_sentiment(headlines)
             except Exception:
                 logger.exception("Failed to analyze sentiment for %s", ticker)
 

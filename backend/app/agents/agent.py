@@ -5,6 +5,7 @@ Uses a ReAct-style agent with LangChain tools to gather stock data
 produce a BUY/HOLD/SELL recommendation.
 """
 
+import asyncio
 import json
 import logging
 
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_TEMPERATURE = 0.3
 _MAX_AGENT_ITERATIONS = 10
+_RAG_SEARCH_TIMEOUT_SECONDS = 5
 
 
 def _get_langchain_llm() -> ChatOpenAI | ChatAnthropic:
@@ -96,7 +98,7 @@ async def _tool_analyze_sentiment(ticker: str) -> str:
     """Fetch news and analyze overall sentiment for a stock ticker."""
     try:
         headlines = fetch_news_headlines(ticker.upper())
-        result = await analyze_sentiment(headlines)
+        result, _ = await analyze_sentiment(headlines)
         return result.model_dump_json()
     except Exception as e:
         return f"Error analyzing sentiment: {e}"
@@ -105,7 +107,12 @@ async def _tool_analyze_sentiment(ticker: str) -> str:
 async def _tool_search_context(query: str) -> str:
     """Search the financial knowledge base for relevant analysis context."""
     try:
-        return await retrieve_context(query)
+        return await asyncio.wait_for(
+            retrieve_context(query),
+            timeout=_RAG_SEARCH_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        return f"Context search timed out after {_RAG_SEARCH_TIMEOUT_SECONDS}s"
     except Exception as e:
         return f"Error searching context: {e}"
 

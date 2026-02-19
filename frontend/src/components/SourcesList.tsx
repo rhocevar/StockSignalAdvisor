@@ -38,9 +38,9 @@ export function SourcesList({ sources }: SourcesListProps) {
           </p>
         ) : (
           <ul className="divide-y">
-            {sources.map((source, index) => (
+            {sources.map((source) => (
               <li
-                key={index}
+                key={source.url ?? source.title}
                 className="px-6 py-3 flex items-start justify-between gap-4"
               >
                 <div className="min-w-0 flex-1">

@@ -160,8 +160,9 @@ class TestToolWrappers:
     @patch("app.agents.agent.fetch_news_headlines")
     async def test_sentiment_wrapper_fetches_and_analyzes(self, mock_news, mock_sentiment):
         mock_news.return_value = ["headline1"]
-        mock_sentiment.return_value = MagicMock(
-            model_dump_json=MagicMock(return_value='{"overall":"positive","score":0.8}')
+        mock_sentiment.return_value = (
+            MagicMock(model_dump_json=MagicMock(return_value='{"overall":"positive","score":0.8}')),
+            [],
         )
 
         from app.agents.agent import _tool_analyze_sentiment

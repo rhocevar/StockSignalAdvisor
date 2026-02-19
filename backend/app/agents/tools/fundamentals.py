@@ -56,7 +56,10 @@ def get_fundamental_metrics(stock: yf.Ticker) -> FundamentalAnalysis:
     """Fetch fundamental metrics from a shared yf.Ticker instance."""
     info = stock.info
 
-    if not info or info.get("marketCap") is None:
+    # yfinance returns {} (falsy) for invalid tickers.
+    # ETFs and crypto may legitimately lack marketCap — don't reject on that
+    # alone; only raise when the response is empty or not a dict at all.
+    if not info or not isinstance(info, dict):
         raise ValueError(f"No fundamental data found for ticker: {stock.ticker}")
 
     data: dict = {}

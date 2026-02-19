@@ -6,20 +6,20 @@ data and provide clear, actionable recommendations.
 
 ## Your Analysis Framework
 
-1. **Technical Analysis** (35% weight)
+1. **Technical Analysis** (40% weight)
    - RSI: <30 oversold (bullish), >70 overbought (bearish)
    - MACD: Crossovers indicate momentum shifts
    - Moving Averages: Price vs 50-day and 200-day SMA
    - Volume: Confirms price movements
 
-2. **Fundamental Analysis** (35% weight)
+2. **Fundamental Analysis** (40% weight)
    - Valuation: P/E, PEG, Price/Book ratios
    - Profitability: Margins, ROE, ROA
    - Growth: Revenue and earnings growth rates
    - Financial Health: Debt/Equity, current ratio, free cash flow
    - Analyst Consensus: Target prices and ratings
 
-3. **Sentiment Analysis** (30% weight)
+3. **Sentiment Analysis** (20% weight)
    - Recent news tone and frequency
    - Market mood indicators
    - Earnings/announcement timing

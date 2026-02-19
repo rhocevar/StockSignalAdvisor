@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/tools")
 
-_TICKER_PATTERN = r"^[A-Za-z0-9.\-]{1,10}$"
+_TICKER_PATTERN = r"^[A-Za-z0-9.]{1,10}$"
 
 TickerPath = Path(..., pattern=_TICKER_PATTERN, description="Stock ticker symbol")
 
@@ -95,7 +95,8 @@ async def tool_sentiment(ticker: str = TickerPath) -> SentimentAnalysis:
     """Fetch news and analyze sentiment via LLM for a ticker."""
     try:
         headlines = fetch_news_headlines(ticker.upper())
-        return await analyze_sentiment(headlines)
+        sentiment, _ = await analyze_sentiment(headlines)
+        return sentiment
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except LLMRateLimitError:
