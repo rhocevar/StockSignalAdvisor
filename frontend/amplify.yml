@@ -1,0 +1,24 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd frontend
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: frontend/.next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - frontend/node_modules/**/*
+
+# ---------------------------------------------------------------------------
+# Environment variable — set in Amplify console under App Settings > Environment Variables:
+#   NEXT_PUBLIC_API_URL = https://YOUR-SERVICE.REGION.awsapprunner.com
+#
+# Set the actual App Runner service URL after the backend is deployed.
+# ---------------------------------------------------------------------------

@@ -129,9 +129,9 @@
 - [x] Bruno API test collection
 
 ### Day 18 — AWS Setup
-- [ ] AWS App Runner configuration
-- [ ] AWS Amplify configuration
-- [ ] Environment variables configured in AWS
+- [x] AWS App Runner configuration
+- [x] AWS Amplify configuration
+- [x] Environment variables configured in AWS
 
 ### Day 19 — Deployment
 - [ ] GitHub Actions CI/CD pipeline (`.github/workflows/ci.yml`)
@@ -154,8 +154,8 @@
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
 | Week 2: AI Integration | Complete | 22/22 |
-| Week 3: Polish & Deploy | In Progress | 23/26 |
-| **Total** | | **73/76** |
+| Week 3: Polish & Deploy | In Progress | 26/29 |
+| **Total** | | **76/79** |
 
 ---
 
