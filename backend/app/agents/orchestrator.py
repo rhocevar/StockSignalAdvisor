@@ -14,6 +14,7 @@ from app.agents.tools.stock_data import get_company_name, get_stock_price, get_t
 from app.agents.tools.technical import calculate_technicals
 from app.config import settings
 from app.models.domain import (
+    AgentResult,
     AnalysisMetadata,
     AnalysisResult,
     FundamentalAnalysis,
@@ -24,6 +25,7 @@ from app.models.domain import (
 )
 from app.models.request import AnalyzeRequest
 from app.models.response import AnalyzeResponse
+from app.providers.llm.base import LLMRateLimitError
 from app.services.cache import get_cached, set_cached
 
 logger = logging.getLogger(__name__)
@@ -130,6 +132,11 @@ class StockAnalysisOrchestrator:
         fundamentals: FundamentalAnalysis | None = results.get("fundamentals")
         headlines: list[NewsSource] | None = results.get("news")
 
+        if price_data is None:
+            raise ValueError(
+                f"Ticker '{ticker}' not found. Verify the symbol and try again."
+            )
+
         # 4. Sentiment (requires news headlines)
         sentiment: SentimentAnalysis | None = None
         if headlines:
@@ -139,7 +146,15 @@ class StockAnalysisOrchestrator:
                 logger.exception("Failed to analyze sentiment for %s", ticker)
 
         # 5. Agent — signal + explanation
-        agent_result = await run_agent(ticker)
+        try:
+            agent_result = await run_agent(ticker)
+        except LLMRateLimitError:
+            raise  # propagate → analysis.py → 429
+        except Exception:
+            logger.exception("Agent failed for %s, using fallback HOLD signal", ticker)
+            agent_result = AgentResult(
+                explanation="Signal analysis temporarily unavailable. Technical and fundamental data are shown below."
+            )
 
         # 6. Compute weighted confidence from pillar scores
         confidence = _compute_weighted_confidence(technicals, fundamentals, sentiment)

@@ -118,9 +118,9 @@
 - [x] Loading UX improvement (animated spinner + cycling status text in LoadingState)
 
 ### Day 16 — Error Handling
-- [ ] Backend error handling (graceful failures, proper HTTP codes)
-- [ ] Frontend error states and fallbacks
-- [ ] Edge cases (invalid ticker, API failures, rate limits)
+- [x] Backend error handling (graceful failures, proper HTTP codes)
+- [x] Frontend error states and fallbacks
+- [x] Edge cases (invalid ticker, API failures, rate limits)
 
 ### Day 17 — Testing
 - [ ] Backend unit tests (providers, tools, agents)
@@ -154,9 +154,9 @@
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
 | Week 2: AI Integration | Complete | 22/22 |
-| Week 3: Polish & Deploy | In Progress | 16/19 |
-| **Total** | | **66/69** |
+| Week 3: Polish & Deploy | In Progress | 19/22 |
+| **Total** | | **69/72** |
 
 ---
 
-*Last updated: 2026-02-19*
+*Last updated: 2026-02-20*

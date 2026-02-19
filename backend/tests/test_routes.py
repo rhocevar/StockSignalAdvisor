@@ -104,6 +104,35 @@ class TestAnalyzeEndpoint:
         response = client.post("/api/v1/analyze", json={})
         assert response.status_code == 422
 
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        side_effect=ValueError("Ticker 'INVALID' not found. Verify the symbol and try again."),
+    )
+    def test_analyze_invalid_ticker_returns_404(self, mock_analyze):
+        response = client.post("/api/v1/analyze", json={"ticker": "INVALID"})
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        side_effect=LLMRateLimitError("rate limit exceeded"),
+    )
+    def test_analyze_rate_limit_returns_429(self, mock_analyze):
+        response = client.post("/api/v1/analyze", json={"ticker": "AAPL"})
+        assert response.status_code == 429
+        assert "rate limit" in response.json()["detail"].lower()
+
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        side_effect=RuntimeError("unexpected crash"),
+    )
+    def test_analyze_service_error_returns_502(self, mock_analyze):
+        response = client.post("/api/v1/analyze", json={"ticker": "AAPL"})
+        assert response.status_code == 502
+
 
 # ---------------------------------------------------------------------------
 # Tools: stock-price

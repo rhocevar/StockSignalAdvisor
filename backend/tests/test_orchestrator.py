@@ -379,6 +379,50 @@ class TestOrchestratorOptionalPillars:
         assert result.analysis.technical is None
 
 
+class TestOrchestratorErrorCases:
+    @pytest.mark.asyncio
+    async def test_invalid_ticker_raises_value_error(self):
+        """When price_data is None (invalid ticker), orchestrator raises ValueError."""
+        patches = _patch_all(price=None)
+
+        with patches["get_ticker"], patches["get_stock_price"], \
+             patches["get_company_name"], patches["calculate_technicals"], \
+             patches["calculate_fundamentals"], patches["fetch_news_headlines"], \
+             patches["analyze_sentiment"], patches["run_agent"]:
+
+            orchestrator = StockAnalysisOrchestrator()
+            with pytest.raises(ValueError, match="not found"):
+                await orchestrator.analyze(AnalyzeRequest(ticker="INVALID"))
+
+    @pytest.mark.asyncio
+    async def test_agent_exception_uses_hold_fallback(self, sample_price):
+        """When run_agent raises a generic exception, orchestrator returns HOLD fallback."""
+        patches = _patch_all(price=sample_price)
+        patches["run_agent"] = patch(
+            "app.agents.orchestrator.run_agent",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("Agent crashed"),
+        )
+
+        with patches["get_ticker"], patches["get_stock_price"], \
+             patches["get_company_name"], patches["calculate_technicals"], \
+             patches["calculate_fundamentals"], patches["fetch_news_headlines"], \
+             patches["analyze_sentiment"], patches["run_agent"]:
+
+            orchestrator = StockAnalysisOrchestrator()
+            result = await orchestrator.analyze(
+                AnalyzeRequest(
+                    ticker="AAPL",
+                    include_technicals=False,
+                    include_fundamentals=False,
+                    include_news=False,
+                )
+            )
+
+        assert result.signal == SignalType.HOLD
+        assert "unavailable" in result.explanation.lower()
+
+
 class TestOrchestratorAgentFallback:
     @pytest.mark.asyncio
     async def test_agent_invalid_json_defaults_to_hold(self, sample_price):
