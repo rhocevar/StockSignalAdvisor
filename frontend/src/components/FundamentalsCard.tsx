@@ -79,7 +79,7 @@ export function FundamentalsCard({ data }: FundamentalsCardProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Fundamental Analysis</CardTitle>
           {scorePct !== null && (
-            <span className="text-sm text-muted-foreground">({scorePct}%)</span>
+            <span className="text-sm text-muted-foreground">Bullishness Score ({scorePct}%)</span>
           )}
         </div>
         {score !== null && <ScoreBar score={score} />}
