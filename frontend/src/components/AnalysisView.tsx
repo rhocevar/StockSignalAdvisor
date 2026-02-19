@@ -4,7 +4,10 @@ import { useEffect } from "react";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { LoadingState } from "@/components/LoadingState";
 import { SignalCard } from "@/components/SignalCard";
+import { PriceChart } from "@/components/PriceChart";
 import { ExplanationPanel } from "@/components/ExplanationPanel";
+import { TechnicalIndicators } from "@/components/TechnicalIndicators";
+import { FundamentalsCard } from "@/components/FundamentalsCard";
 import { SourcesList } from "@/components/SourcesList";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Button } from "@/components/ui/button";
@@ -53,6 +56,8 @@ export function AnalysisView({ ticker }: AnalysisViewProps) {
     return null;
   }
 
+  const priceHistory = data.price_data?.price_history ?? [];
+
   return (
     <div className="w-full max-w-2xl mx-auto p-8 space-y-4">
       <SignalCard
@@ -62,7 +67,14 @@ export function AnalysisView({ ticker }: AnalysisViewProps) {
         confidence={data.confidence}
         priceData={data.price_data}
       />
+      {priceHistory.length > 0 && <PriceChart history={priceHistory} />}
       <ExplanationPanel explanation={data.explanation} />
+      {data.analysis.technical && (
+        <TechnicalIndicators data={data.analysis.technical} />
+      )}
+      {data.analysis.fundamentals && (
+        <FundamentalsCard data={data.analysis.fundamentals} />
+      )}
       <SourcesList sources={data.sources} />
       <Disclaimer />
     </div>

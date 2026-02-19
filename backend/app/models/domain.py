@@ -89,6 +89,11 @@ class AnalysisResult(BaseModel):
     sentiment: SentimentAnalysis | None = None
 
 
+class PricePoint(BaseModel):
+    date: str   # ISO format: "2025-01-15"
+    close: float
+
+
 class PriceData(BaseModel):
     current: float | None = None
     currency: str = "USD"
@@ -97,6 +102,7 @@ class PriceData(BaseModel):
     change_percent_1m: float | None = None
     high_52w: float | None = None
     low_52w: float | None = None
+    price_history: list[PricePoint] | None = None
 
 
 class NewsSource(BaseModel):

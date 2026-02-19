@@ -73,6 +73,11 @@ export interface AnalysisResult {
   sentiment: SentimentAnalysis | null;
 }
 
+export interface PricePoint {
+  date: string;
+  close: number;
+}
+
 export interface PriceData {
   current: number | null;
   currency: string;
@@ -81,6 +86,7 @@ export interface PriceData {
   change_percent_1m: number | null;
   high_52w: number | null;
   low_52w: number | null;
+  price_history: PricePoint[] | null;
 }
 
 export interface NewsSource {

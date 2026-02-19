@@ -8,7 +8,7 @@
 ## Project Overview
 
 **Stock Signal Advisor** — AI-powered stock analysis app providing Buy/Hold/Sell recommendations.
-- **Frontend:** Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui
+- **Frontend:** Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui + Recharts v3.7.0
 - **Backend:** FastAPI (Python 3.11+) + LangChain + LangGraph
 - **Hosting:** AWS Amplify (frontend) + AWS App Runner (backend)
 

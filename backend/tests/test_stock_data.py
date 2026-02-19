@@ -9,7 +9,7 @@ from app.agents.tools.stock_data import (
     get_stock_price,
     get_ticker,
 )
-from app.models.domain import PriceData
+from app.models.domain import PriceData, PricePoint
 
 
 @pytest.fixture
@@ -64,6 +64,10 @@ class TestGetStockPrice:
         assert result.currency == "USD"
         assert result.high_52w == 180.0
         assert result.low_52w == 120.0
+        assert result.price_history is not None
+        assert len(result.price_history) == 30
+        assert isinstance(result.price_history[0], PricePoint)
+        assert result.price_history[0].close == 141.0
 
     def test_calculates_change_percentages(self, mock_ticker):
         result = get_stock_price(mock_ticker)
@@ -92,6 +96,7 @@ class TestGetStockPrice:
         assert result.change_percent_1d is None
         assert result.change_percent_1w is None
         assert result.change_percent_1m is None
+        assert result.price_history is None
 
 
 class TestGetPriceHistory:

@@ -50,7 +50,7 @@ export function SignalCard({
           <SignalBadge signal={signal} />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="flex items-center gap-6">
           {/* Confidence */}
           <div>
@@ -97,6 +97,20 @@ export function SignalCard({
             </>
           )}
         </div>
+
+        {/* 52-week range */}
+        {priceData && (priceData.high_52w !== null || priceData.low_52w !== null) && (
+          <div className="pt-2 border-t">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+              52W Range
+            </p>
+            <p className="text-sm font-medium text-muted-foreground">
+              {formatPrice(priceData.low_52w, priceData.currency)}
+              <span className="mx-1 text-muted-foreground/60">—</span>
+              {formatPrice(priceData.high_52w, priceData.currency)}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

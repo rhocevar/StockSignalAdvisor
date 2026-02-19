@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import pandas as pd
 import yfinance as yf
 
-from app.models.domain import PriceData
+from app.models.domain import PriceData, PricePoint
 
 _YF_TIMEOUT_SECONDS = 10
 
@@ -47,6 +47,15 @@ def get_stock_price(stock: yf.Ticker) -> PriceData:
             month_ago = history["Close"].iloc[0]
             change_1m = round((current_price - month_ago) / month_ago * 100, 2)
 
+    price_history: list[PricePoint] | None = None
+    if not history.empty:
+        points = [
+            PricePoint(date=d.strftime("%Y-%m-%d"), close=round(float(c), 4))
+            for d, c in zip(history.index, history["Close"])
+            if pd.notna(c)
+        ]
+        price_history = points if points else None
+
     return PriceData(
         current=current_price,
         currency=info.get("currency", "USD"),
@@ -55,6 +64,7 @@ def get_stock_price(stock: yf.Ticker) -> PriceData:
         change_percent_1m=change_1m,
         high_52w=info.get("fiftyTwoWeekHigh"),
         low_52w=info.get("fiftyTwoWeekLow"),
+        price_history=price_history,
     )
 
 

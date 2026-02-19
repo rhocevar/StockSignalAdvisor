@@ -110,11 +110,12 @@
 ## Week 3: Polish & Deploy
 
 ### Day 15 — Extended UI
-- [ ] PriceChart component (Recharts)
-- [ ] TechnicalIndicators component
-- [ ] FundamentalsCard component
-- [ ] Analysis results page (`/analyze/[ticker]`)
-- [ ] 52-week high/low display in SignalCard
+- [x] PriceChart component (Recharts v3.7.0)
+- [x] TechnicalIndicators component
+- [x] FundamentalsCard component
+- [x] Analysis results page (`/analyze/[ticker]`) — all new components wired in
+- [x] 52-week high/low display in SignalCard
+- [x] Loading UX improvement (animated spinner + cycling status text in LoadingState)
 
 ### Day 16 — Error Handling
 - [ ] Backend error handling (graceful failures, proper HTTP codes)
@@ -153,9 +154,9 @@
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
 | Week 2: AI Integration | Complete | 22/22 |
-| Week 3: Polish & Deploy | In Progress | 10/18 |
-| **Total** | | **60/68** |
+| Week 3: Polish & Deploy | In Progress | 16/19 |
+| **Total** | | **66/69** |
 
 ---
 
-*Last updated: 2026-02-20*
+*Last updated: 2026-02-19*
