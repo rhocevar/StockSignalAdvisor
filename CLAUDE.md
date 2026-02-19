@@ -20,7 +20,13 @@
 ## Project Structure
 
 ```
-frontend/          → Next.js 14 app (placeholder until Day 13)
+frontend/          → Next.js 14 app (App Router + TypeScript + Tailwind + shadcn/ui)
+  src/app/         → App Router pages (home, analyze/[ticker])
+  src/components/  → providers.tsx (React Query), ui/ (shadcn/ui components)
+  src/types/       → TypeScript types mirroring backend Pydantic models
+  src/lib/         → api.ts (fetch-based API client)
+  src/hooks/       → useAnalysis.ts (React Query mutation hook)
+  .agents/skills/  → Vercel Agent Skills (react-best-practices, etc.)
 backend/app/       → FastAPI application
   enums.py         → All enums (central, never duplicate)
   config.py        → pydantic-settings (auto-loads .env)

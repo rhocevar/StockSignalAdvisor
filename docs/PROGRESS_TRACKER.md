@@ -83,11 +83,15 @@
 - [x] Dynamic pillar reweighting (40/40/20, 70/30, 60/40, 100)
 
 ### Day 13 — Frontend Setup
-- [ ] Next.js 14 app initialized (App Router)
-- [ ] Tailwind CSS configured
-- [ ] shadcn/ui installed and configured
-- [ ] React Query (TanStack) setup
-- [ ] TypeScript types defined
+- [x] Next.js 14 app initialized (App Router)
+- [x] Tailwind CSS configured
+- [x] shadcn/ui installed and configured (button, card, input, badge)
+- [x] React Query (TanStack) setup
+- [x] TypeScript types defined (mirroring all backend Pydantic models)
+- [x] API client (`lib/api.ts`) and React Query hook (`hooks/useAnalysis.ts`)
+- [x] Placeholder pages (home + `/analyze/[ticker]`)
+- [x] Environment configuration (`.env.local`)
+- [x] Vercel Agent Skills installed (react-best-practices, composition-patterns, web-design-guidelines)
 
 ### Day 14 — Core UI Components
 - [ ] TickerInput component (search/autocomplete)
@@ -144,10 +148,10 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
-| Week 2: AI Integration | In Progress | 17/22 |
+| Week 2: AI Integration | Complete | 22/22 |
 | Week 3: Polish & Deploy | Not Started | 0/18 |
-| **Total** | | **45/68** |
+| **Total** | | **50/68** |
 
 ---
 
-*Last updated: 2026-02-18*
+*Last updated: 2026-02-19*

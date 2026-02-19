@@ -43,4 +43,4 @@ htmlcov/
 *.log
 
 # Local
-.claude/settings.local.json
+.claude/
