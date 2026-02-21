@@ -3,10 +3,31 @@ import type { AnalyzeRequest, AnalyzeResponse } from "@/types";
 
 const mockRequest: AnalyzeRequest = { ticker: "AAPL" };
 
-const mockResponse: Partial<AnalyzeResponse> = {
+const mockResponse: AnalyzeResponse = {
   ticker: "AAPL",
+  company_name: "Apple Inc.",
   signal: "BUY",
   confidence: 0.85,
+  explanation: "Strong technical signals.",
+  analysis: { technical: null, fundamentals: null, sentiment: null },
+  price_data: {
+    current: 150.0,
+    currency: "USD",
+    change_percent_1d: 1.2,
+    change_percent_1w: null,
+    change_percent_1m: null,
+    high_52w: null,
+    low_52w: null,
+    price_history: [],
+  },
+  sources: [],
+  metadata: {
+    generated_at: "2025-01-01T00:00:00Z",
+    llm_provider: "openai",
+    model_used: "gpt-4o-mini",
+    vectorstore_provider: "pinecone",
+    cached: false,
+  },
 };
 
 function mockFetch(status: number, body: unknown): jest.Mock {

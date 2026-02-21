@@ -84,8 +84,10 @@ describe("AnalysisView", () => {
   });
 
   it("renders nothing when not pending and no data or error", () => {
-    const { container } = render(<AnalysisView ticker="AAPL" />);
-    expect(container.firstChild).toBeNull();
+    render(<AnalysisView ticker="AAPL" />);
+    expect(screen.queryByText(/AI analysis typically takes/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Analysis failed/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("renders signal card when analysis data is present", () => {

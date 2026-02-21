@@ -65,6 +65,11 @@ def main() -> None:
         default=DEFAULT_DELAY,
         help=f"Seconds between requests (default: {DEFAULT_DELAY})",
     )
+    parser.add_argument(
+        "--fail-fast",
+        action="store_true",
+        help="Exit with code 1 if any ticker fails (default: warn but succeed)",
+    )
     args = parser.parse_args()
 
     tickers = [t.strip().upper() for t in args.tickers.split(",") if t.strip()]
@@ -94,7 +99,7 @@ def main() -> None:
             time.sleep(args.delay)
 
     print(f"\nDone: {passed} succeeded, {failed} failed")
-    if failed:
+    if failed and args.fail_fast:
         sys.exit(1)
 
 

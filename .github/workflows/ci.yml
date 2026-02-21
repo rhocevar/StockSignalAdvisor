@@ -71,12 +71,26 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
 
-      - uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t 809275433532.dkr.ecr.us-east-2.amazonaws.com/stock-signal-advisor-api:latest ./backend
-          docker push 809275433532.dkr.ecr.us-east-2.amazonaws.com/stock-signal-advisor-api:latest
+          # Pull the previous image to use as a cache layer (fails silently on first run)
+          docker pull $ECR_REGISTRY/stock-signal-advisor-api:latest || true
+
+          docker build \
+            --cache-from $ECR_REGISTRY/stock-signal-advisor-api:latest \
+            -t $ECR_REGISTRY/stock-signal-advisor-api:latest \
+            -t $ECR_REGISTRY/stock-signal-advisor-api:$IMAGE_TAG \
+            ./backend
+
+          docker push $ECR_REGISTRY/stock-signal-advisor-api:latest
+          docker push $ECR_REGISTRY/stock-signal-advisor-api:$IMAGE_TAG
 
   smoke-test:
     name: Production Smoke Test
@@ -89,16 +103,38 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
 
+      - name: Wait for App Runner deployment to start
+        run: |
+          # Phase 1: App Runner may still show RUNNING from the old deployment
+          # while it picks up the new ECR image. Wait up to 2 min for the
+          # status to flip to OPERATION_IN_PROGRESS before polling for completion.
+          echo "Phase 1: Waiting for deployment to start (up to 2 min)..."
+          for i in $(seq 1 8); do
+            STATUS=$(aws apprunner describe-service \
+              --service-arn ${{ secrets.APP_RUNNER_SERVICE_ARN }} \
+              --query 'Service.Status' --output text)
+            echo "Attempt $i/8: status=$STATUS"
+            if [ "$STATUS" = "OPERATION_IN_PROGRESS" ]; then
+              echo "Deployment started."
+              break
+            fi
+            if [ $i -eq 8 ]; then
+              echo "Warning: did not see OPERATION_IN_PROGRESS within 2 min. Proceeding anyway."
+            fi
+            sleep 15
+          done
+
       - name: Wait for App Runner deployment to complete
         run: |
-          echo "Polling App Runner deployment status (up to 10 min)..."
+          # Phase 2: Poll until the rolling deploy finishes and status is RUNNING again.
+          echo "Phase 2: Waiting for deployment to complete (up to 10 min)..."
           for i in $(seq 1 20); do
             STATUS=$(aws apprunner describe-service \
               --service-arn ${{ secrets.APP_RUNNER_SERVICE_ARN }} \
               --query 'Service.Status' --output text)
             echo "Attempt $i/20: status=$STATUS"
             if [ "$STATUS" = "RUNNING" ]; then
-              echo "Deployment complete"
+              echo "Deployment complete."
               exit 0
             fi
             sleep 30
