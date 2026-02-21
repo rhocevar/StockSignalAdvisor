@@ -14,7 +14,7 @@ router = APIRouter()
 _orchestrator = StockAnalysisOrchestrator()
 
 
-@router.post("/analyze", response_model=AnalyzeResponse)
+@router.post("/signal", response_model=AnalyzeResponse)
 async def analyze_stock(request: AnalyzeRequest) -> AnalyzeResponse:
     try:
         return await _orchestrator.analyze(request)

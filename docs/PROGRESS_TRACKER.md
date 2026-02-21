@@ -78,7 +78,7 @@
 - [x] `StockAnalysisOrchestrator` class
 - [x] Full analysis pipeline (technical + fundamental + sentiment)
 - [x] In-memory TTL caching (`services/cache.py`)
-- [x] `POST /api/v1/analyze` endpoint wired up
+- [x] `POST /api/v1/signal` endpoint wired up
 - [x] Shared `yf.Ticker` instance across tools (resolved stock_data.py TODO)
 - [x] Dynamic pillar reweighting (40/40/20, 70/30, 60/40, 100)
 

@@ -65,7 +65,7 @@ docker compose up
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v1/health` | GET | Health check + provider status |
-| `/api/v1/analyze` | POST | Analyze a stock ticker |
+| `/api/v1/signal` | POST | Analyze a stock ticker |
 
 Swagger UI available at `http://localhost:8000/docs` when the server is running.
 

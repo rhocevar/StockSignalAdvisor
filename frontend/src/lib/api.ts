@@ -7,7 +7,7 @@ export async function analyzeStock(
 ): Promise<AnalyzeResponse> {
   let res: Response;
   try {
-    res = await fetch(`${API_BASE_URL}/api/v1/analyze`, {
+    res = await fetch(`${API_BASE_URL}/api/v1/signal`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),

@@ -74,7 +74,7 @@ class TestAnalyzeEndpoint:
         return_value=_SAMPLE_ANALYZE_RESPONSE,
     )
     def test_analyze_returns_200(self, mock_analyze):
-        response = client.post("/api/v1/analyze", json={"ticker": "AAPL"})
+        response = client.post("/api/v1/signal", json={"ticker": "AAPL"})
         assert response.status_code == 200
 
     @patch(
@@ -83,7 +83,7 @@ class TestAnalyzeEndpoint:
         return_value=_SAMPLE_ANALYZE_RESPONSE,
     )
     def test_analyze_response_structure(self, mock_analyze):
-        data = client.post("/api/v1/analyze", json={"ticker": "AAPL"}).json()
+        data = client.post("/api/v1/signal", json={"ticker": "AAPL"}).json()
         assert data["ticker"] == "AAPL"
         assert data["signal"] == SignalType.BUY.value
         assert data["confidence"] == 0.75
@@ -97,11 +97,11 @@ class TestAnalyzeEndpoint:
         return_value=_SAMPLE_ANALYZE_RESPONSE,
     )
     def test_analyze_calls_orchestrator(self, mock_analyze):
-        client.post("/api/v1/analyze", json={"ticker": "aapl"})
+        client.post("/api/v1/signal", json={"ticker": "aapl"})
         mock_analyze.assert_called_once()
 
     def test_analyze_missing_ticker(self):
-        response = client.post("/api/v1/analyze", json={})
+        response = client.post("/api/v1/signal", json={})
         assert response.status_code == 422
 
     @patch(
@@ -110,7 +110,7 @@ class TestAnalyzeEndpoint:
         side_effect=ValueError("Ticker 'INVALID' not found. Verify the symbol and try again."),
     )
     def test_analyze_invalid_ticker_returns_404(self, mock_analyze):
-        response = client.post("/api/v1/analyze", json={"ticker": "INVALID"})
+        response = client.post("/api/v1/signal", json={"ticker": "INVALID"})
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
@@ -120,7 +120,7 @@ class TestAnalyzeEndpoint:
         side_effect=LLMRateLimitError("rate limit exceeded"),
     )
     def test_analyze_rate_limit_returns_429(self, mock_analyze):
-        response = client.post("/api/v1/analyze", json={"ticker": "AAPL"})
+        response = client.post("/api/v1/signal", json={"ticker": "AAPL"})
         assert response.status_code == 429
         assert "rate limit" in response.json()["detail"].lower()
 
@@ -130,7 +130,7 @@ class TestAnalyzeEndpoint:
         side_effect=RuntimeError("unexpected crash"),
     )
     def test_analyze_service_error_returns_502(self, mock_analyze):
-        response = client.post("/api/v1/analyze", json={"ticker": "AAPL"})
+        response = client.post("/api/v1/signal", json={"ticker": "AAPL"})
         assert response.status_code == 502
 
 
