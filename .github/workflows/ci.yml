@@ -83,17 +83,28 @@ jobs:
     needs: [deploy]
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for App Runner deployment
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Wait for App Runner deployment to complete
         run: |
-          echo "Polling App Runner health endpoint (up to 5 min)..."
-          for i in $(seq 1 10); do
-            if curl -sf ${{ secrets.NEXT_PUBLIC_API_URL }}/api/v1/health; then
-              echo ""
-              echo "Health check passed on attempt $i"
+          echo "Polling App Runner deployment status (up to 10 min)..."
+          for i in $(seq 1 20); do
+            STATUS=$(aws apprunner describe-service \
+              --service-arn ${{ secrets.APP_RUNNER_SERVICE_ARN }} \
+              --query 'Service.Status' --output text)
+            echo "Attempt $i/20: status=$STATUS"
+            if [ "$STATUS" = "RUNNING" ]; then
+              echo "Deployment complete"
               exit 0
             fi
-            echo "Attempt $i/10 failed, retrying in 30s..."
             sleep 30
           done
-          echo "Health check failed after 10 attempts"
+          echo "Timed out waiting for App Runner deployment"
           exit 1
+
+      - name: Health check
+        run: curl -sf ${{ secrets.NEXT_PUBLIC_API_URL }}/api/v1/health
