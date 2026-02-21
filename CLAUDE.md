@@ -14,8 +14,8 @@
 
 ## Key Documents
 
-- [docs/STOCK_SIGNAL_ADVISOR_SPEC.md](docs/STOCK_SIGNAL_ADVISOR_SPEC.md) — Full project specification
-- [docs/PROGRESS_TRACKER.md](docs/PROGRESS_TRACKER.md) — Development progress checklist
+- [docs/API.md](docs/API.md) — Full API reference
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — System design
 
 ## Project Structure
 
@@ -37,7 +37,7 @@ backend/app/       → FastAPI application
     vectorstore/   → base.py, pinecone.py, factory.py
   agents/tools/    → Data fetching + calculations + sentiment
   agents/prompts.py → System prompts (analysis, sentiment)
-  agents/          → LangChain orchestrator (Day 11+)
+  agents/          → LangChain orchestrator
   rag/             → Embedding pipeline + indexer + retriever
   models/          → domain.py, request.py, response.py
   services/        → Caching and shared services
@@ -119,7 +119,6 @@ docs/              → Documentation
 
 ## Workflow Rules
 
-- **Always update** [docs/PROGRESS_TRACKER.md](docs/PROGRESS_TRACKER.md) after completing a task (check the box, update counts and date)
 - **Read before editing** — always read a file before modifying it
 - **Test after building** — run relevant tests after implementing a feature
-- **Don't over-engineer** — build what the spec says, no extra abstractions
+- **Don't over-engineer** — no extra abstractions beyond what is needed
