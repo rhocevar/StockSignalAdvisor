@@ -134,10 +134,10 @@
 - [x] Environment variables configured in AWS
 
 ### Day 19 — Deployment
-- [ ] GitHub Actions CI/CD pipeline (`.github/workflows/ci.yml`)
-- [ ] Backend deployed to App Runner
-- [ ] Frontend deployed to Amplify
-- [ ] Production smoke test
+- [x] GitHub Actions CI/CD pipeline (`.github/workflows/ci.yml`)
+- [x] Backend deployed to App Runner
+- [x] Frontend deployed to Amplify
+- [x] Production smoke test
 
 ### Day 20-21 — Documentation & Demo
 - [ ] README.md finalized (screenshots, setup guide, architecture diagram)
@@ -154,9 +154,9 @@
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
 | Week 2: AI Integration | Complete | 22/22 |
-| Week 3: Polish & Deploy | In Progress | 26/29 |
-| **Total** | | **76/79** |
+| Week 3: Polish & Deploy | In Progress | 30/33 |
+| **Total** | | **80/83** |
 
 ---
 
-*Last updated: 2026-02-19*
+*Last updated: 2026-02-21*
