@@ -1,3 +1,20 @@
+# ---------------------------------------------------------------------------
+# NOTE: This service is deployed via Docker image (ECR), NOT managed runtime.
+#
+# The managed Python 3.11 runtime was attempted but fails to compile
+# Rust-dependent packages (uvicorn[standard] → watchfiles, tiktoken).
+# The Dockerfile (python:3.11.9-slim) handles these correctly because it has
+# a full build environment.
+#
+# Deployment method:
+#   1. Build: docker build -t stock-signal-advisor-api .
+#   2. Push:  to Amazon ECR (see README for full push commands)
+#   3. Create App Runner service → "Container registry" → ECR image URI
+#
+# This file is kept for reference only. App Runner reads it when using
+# source-code deployment; it is NOT used by container-image deployment.
+# ---------------------------------------------------------------------------
+
 version: 1.0
 runtime: python311
 
@@ -8,9 +25,9 @@ build:
 
 run:
   runtime-version: 3.11
-  command: uvicorn app.main:app --host 0.0.0.0 --port 8080
+  command: uvicorn app.main:app --host 0.0.0.0 --port 8000
   network:
-    port: 8080
+    port: 8000
     env: PORT
   env:
     - name: ENVIRONMENT

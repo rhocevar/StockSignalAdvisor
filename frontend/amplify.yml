@@ -1,24 +1,27 @@
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - cd frontend
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: frontend/.next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - frontend/node_modules/**/*
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+    appRoot: frontend
 
 # ---------------------------------------------------------------------------
+# Monorepo deployment: Amplify builds from the "frontend/" subdirectory.
+# The appRoot key sets the working directory, so no "cd frontend" needed
+# and all paths (baseDirectory, cache) are relative to frontend/.
+#
 # Environment variable — set in Amplify console under App Settings > Environment Variables:
 #   NEXT_PUBLIC_API_URL = https://YOUR-SERVICE.REGION.awsapprunner.com
-#
-# Set the actual App Runner service URL after the backend is deployed.
 # ---------------------------------------------------------------------------
