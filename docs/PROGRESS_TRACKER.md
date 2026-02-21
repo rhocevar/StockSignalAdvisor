@@ -140,11 +140,11 @@
 - [x] Production smoke test
 
 ### Day 20-21 — Documentation & Demo
-- [ ] README.md finalized (screenshots, setup guide, architecture diagram)
-- [ ] API documentation (`docs/API.md`)
-- [ ] Architecture documentation (`docs/ARCHITECTURE.md`)
-- [ ] Pre-cache popular tickers for fast demo
-- [ ] Final polish and walkthrough
+- [x] README.md finalized (screenshots, setup guide, architecture diagram)
+- [x] API documentation (`docs/API.md`)
+- [x] Architecture documentation (`docs/ARCHITECTURE.md`)
+- [x] Pre-cache popular tickers for fast demo
+- [x] Final polish and walkthrough
 
 ---
 
@@ -154,9 +154,9 @@
 |-------|--------|----------|
 | Week 1: Foundation & Abstractions | Complete | 28/28 |
 | Week 2: AI Integration | Complete | 22/22 |
-| Week 3: Polish & Deploy | In Progress | 30/33 |
-| **Total** | | **80/83** |
+| Week 3: Polish & Deploy | Complete | 35/35 |
+| **Total** | | **85/85** |
 
 ---
 
-*Last updated: 2026-02-21*
+*Last updated: 2026-02-21 — Project complete*
