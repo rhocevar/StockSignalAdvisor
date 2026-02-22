@@ -3,7 +3,7 @@
 Base URLs:
 - **Local:** `http://localhost:8000`
 - **Production:** `https://xdvpqzqg4m.us-east-2.awsapprunner.com`
-- **Interactive docs (Swagger):** `{base}/docs`
+- **Interactive docs (Swagger):** `http://localhost:8000/docs` (local only — disabled in production)
 
 All endpoints use the `/api/v1/` prefix. Responses are JSON.
 

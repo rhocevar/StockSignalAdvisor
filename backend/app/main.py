@@ -12,10 +12,16 @@ from app.services.limiter import limiter
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 
+_is_production = settings.ENVIRONMENT == "production"
+
 app = FastAPI(
     title="Stock Signal Advisor",
     version="1.0.0",
     description="AI-powered stock analysis providing Buy/Hold/Sell recommendations",
+    # Disable interactive docs in production to reduce attack surface.
+    # Set ENVIRONMENT=development locally to re-enable.
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
 )
 
 app.state.limiter = limiter

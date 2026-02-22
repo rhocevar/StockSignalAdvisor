@@ -10,7 +10,7 @@ AI-powered stock analysis app that delivers **Buy / Hold / Sell** recommendation
 
 - **Frontend:** https://main.d3gra918usm0j6.amplifyapp.com
 - **API Health:** https://xdvpqzqg4m.us-east-2.awsapprunner.com/api/v1/health
-- **API Docs (Swagger):** https://xdvpqzqg4m.us-east-2.awsapprunner.com/docs
+- **API Docs (Swagger):** available locally at `http://localhost:8000/docs` (disabled in production)
 
 <!-- screenshot: home page with ticker input -->
 
@@ -152,7 +152,7 @@ See `.env.example` for the full template.
 | `/api/v1/tools/rag-search` | GET | Semantic search over financial knowledge |
 
 Full documentation: [docs/API.md](docs/API.md)
-Interactive docs: `http://localhost:8000/docs`
+Interactive docs (local only): `http://localhost:8000/docs`
 
 ## Running Tests
 

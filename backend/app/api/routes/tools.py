@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, HTTPException, Path, Query, Request
 
 from app.agents.tools.fundamentals import calculate_fundamentals
 from app.agents.tools.news_fetcher import fetch_news_headlines
@@ -9,6 +9,7 @@ from app.agents.tools.stock_data import get_company_name, get_stock_price, get_t
 from app.agents.tools.technical import calculate_technicals
 from app.providers.llm.base import LLMRateLimitError
 from app.providers.vectorstore.base import SearchResult
+from app.services.limiter import limiter
 from app.rag.retriever import retrieve
 from app.models.domain import (
     FundamentalAnalysis,
@@ -91,7 +92,8 @@ def tool_news(ticker: str = TickerPath) -> list[NewsSource]:
 
 
 @router.get("/sentiment/{ticker}", response_model=SentimentAnalysis)
-async def tool_sentiment(ticker: str = TickerPath) -> SentimentAnalysis:
+@limiter.limit("5/minute")
+async def tool_sentiment(request: Request, ticker: str = TickerPath) -> SentimentAnalysis:
     """Fetch news and analyze sentiment via LLM for a ticker."""
     try:
         headlines = fetch_news_headlines(ticker.upper())
@@ -110,8 +112,10 @@ async def tool_sentiment(ticker: str = TickerPath) -> SentimentAnalysis:
 
 
 @router.get("/rag-search", response_model=list[SearchResult])
+@limiter.limit("5/minute")
 async def tool_rag_search(
-    query: str = Query(..., min_length=1, description="Natural language search query"),
+    request: Request,
+    query: str = Query(..., min_length=1, max_length=500, description="Natural language search query"),
     top_k: int = Query(5, ge=1, le=20, description="Max results to return"),
 ) -> list[SearchResult]:
     """Search the RAG vector store for relevant financial context."""
