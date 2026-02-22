@@ -12,6 +12,20 @@ from app.enums import (
 from app.providers.llm.base import ChatMessage
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Clear SlowAPI's in-memory hit counters before each test.
+
+    The test client always uses 127.0.0.1 as the remote address. Without this
+    reset, requests accumulate across tests and trip the 5/minute limit on the
+    /signal endpoint, causing unrelated tests to fail with 429.
+    """
+    from app.services.limiter import limiter
+
+    limiter._storage.reset()
+    yield
+
+
 @pytest.fixture
 def sample_messages():
     return [

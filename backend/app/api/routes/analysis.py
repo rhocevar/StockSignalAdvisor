@@ -1,11 +1,12 @@
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app.agents.orchestrator import StockAnalysisOrchestrator
 from app.models.request import AnalyzeRequest
 from app.models.response import AnalyzeResponse
 from app.providers.llm.base import LLMRateLimitError
+from app.services.limiter import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,10 @@ _orchestrator = StockAnalysisOrchestrator()
 
 
 @router.post("/signal", response_model=AnalyzeResponse)
-async def analyze_stock(request: AnalyzeRequest) -> AnalyzeResponse:
+@limiter.limit("5/minute")
+async def analyze_stock(request: Request, body: AnalyzeRequest) -> AnalyzeResponse:
     try:
-        return await _orchestrator.analyze(request)
+        return await _orchestrator.analyze(body)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except LLMRateLimitError:
@@ -26,7 +28,7 @@ async def analyze_stock(request: AnalyzeRequest) -> AnalyzeResponse:
             detail="LLM provider rate limit exceeded. Please try again later.",
         )
     except Exception:
-        logger.exception("Unexpected error analyzing %s", request.ticker)
+        logger.exception("Unexpected error analyzing %s", body.ticker)
         raise HTTPException(
             status_code=502,
             detail="Analysis service temporarily unavailable. Please try again.",

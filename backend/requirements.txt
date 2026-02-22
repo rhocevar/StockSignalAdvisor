@@ -22,6 +22,9 @@ requests==2.32.3
 # Caching
 cachetools==5.5.2
 
+# Rate Limiting
+slowapi==0.1.9
+
 # Testing
 pytest==8.3.5
 pytest-asyncio==0.26.0
