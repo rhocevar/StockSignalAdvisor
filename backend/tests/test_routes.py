@@ -71,10 +71,10 @@ _SAMPLE_ANALYZE_RESPONSE = AnalyzeResponse(
 class TestAnalyzeEndpoint:
     @pytest.fixture(autouse=True)
     def bypass_uncached_rate_limit(self):
-        # Patch get_cached so every request in this class appears cached,
-        # preventing the per-IP uncached counter from being incremented and
-        # causing spurious 429s across tests.
-        with patch("app.api.routes.analysis.get_cached", return_value=_SAMPLE_ANALYZE_RESPONSE):
+        # Simulate a cache miss so the orchestrator is always reached.
+        # Patch check_uncached_rate_limit as a no-op to avoid spurious 429s.
+        with patch("app.api.routes.analysis.get_cached", return_value=None), \
+             patch("app.api.routes.analysis.check_uncached_rate_limit"):
             yield
 
     @patch(

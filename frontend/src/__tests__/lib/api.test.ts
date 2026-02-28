@@ -1,4 +1,4 @@
-import { analyzeStock } from "@/lib/api";
+import { analyzeStock, ApiError } from "@/lib/api";
 import type { AnalyzeRequest, AnalyzeResponse } from "@/types";
 
 const mockRequest: AnalyzeRequest = { ticker: "AAPL" };
@@ -51,19 +51,28 @@ describe("analyzeStock", () => {
     expect(result).toEqual(mockResponse);
   });
 
-  it("throws with ticker name and 'not found' on 404", async () => {
+  it("throws ApiError with status 404 and ticker name on 404", async () => {
     mockFetch(404, {});
-    await expect(analyzeStock(mockRequest)).rejects.toThrow(/AAPL/);
+    const error = await analyzeStock(mockRequest).catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(404);
+    expect(error.message).toMatch(/AAPL/);
   });
 
-  it("throws rate limit message on 429", async () => {
+  it("throws ApiError with status 429 on rate limit", async () => {
     mockFetch(429, {});
-    await expect(analyzeStock(mockRequest)).rejects.toThrow(/rate limit/i);
+    const error = await analyzeStock(mockRequest).catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(429);
+    expect(error.message).toMatch(/rate limit/i);
   });
 
-  it("throws service unavailable message on 500", async () => {
+  it("throws ApiError with status 500 on server error", async () => {
     mockFetch(500, {});
-    await expect(analyzeStock(mockRequest)).rejects.toThrow(/unavailable/i);
+    const error = await analyzeStock(mockRequest).catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(500);
+    expect(error.message).toMatch(/unavailable/i);
   });
 
   it("throws network error message when fetch throws", async () => {

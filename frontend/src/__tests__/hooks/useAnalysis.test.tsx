@@ -2,10 +2,14 @@ import React from "react";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAnalysis } from "@/hooks/useAnalysis";
-import { analyzeStock } from "@/lib/api";
+import { analyzeStock, ApiError } from "@/lib/api";
 import type { AnalyzeResponse } from "@/types";
 
-jest.mock("../../lib/api");
+// Keep ApiError as a real class so instanceof checks work in the retry callback.
+jest.mock("../../lib/api", () => ({
+  ...jest.requireActual("../../lib/api"),
+  analyzeStock: jest.fn(),
+}));
 
 const mockAnalyzeStock = analyzeStock as jest.Mock;
 
@@ -77,7 +81,7 @@ describe("useAnalysis", () => {
   });
 
   it("exposes error when query rejects", async () => {
-    const err = new Error('Ticker "INVALID" not found.');
+    const err = new ApiError('Ticker "INVALID" not found.', 404);
     mockAnalyzeStock.mockRejectedValue(err);
     const { result } = renderHook(() => useAnalysis("INVALID"), {
       wrapper: createWrapper(),

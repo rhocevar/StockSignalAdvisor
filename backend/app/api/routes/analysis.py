@@ -18,10 +18,15 @@ _orchestrator = StockAnalysisOrchestrator()
 
 @router.post("/signal", response_model=AnalyzeResponse)
 async def analyze_stock(request: Request, body: AnalyzeRequest) -> AnalyzeResponse:
-    # Only count requests toward the rate limit when they will hit the LLM.
-    # Cached responses are cheap memory lookups and need no throttling.
-    if not get_cached(body.ticker):
-        check_uncached_rate_limit(request)
+    # Short-circuit for cached tickers: cheap memory lookup, no LLM involved.
+    cached = get_cached(body.ticker.upper())
+    if cached is not None:
+        result = cached.model_copy(deep=True)
+        result.metadata.cached = True
+        return result
+
+    # Only uncached requests consume the rate limit (they will hit the LLM).
+    check_uncached_rate_limit(request)
     try:
         return await _orchestrator.analyze(body)
     except ValueError as e:

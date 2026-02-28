@@ -2,6 +2,15 @@ import type { AnalyzeRequest, AnalyzeResponse } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export async function analyzeStock(
   request: AnalyzeRequest
 ): Promise<AnalyzeResponse> {
@@ -20,21 +29,24 @@ export async function analyzeStock(
 
   if (!res.ok) {
     if (res.status === 404) {
-      throw new Error(
-        `Ticker "${request.ticker}" not found. Verify the symbol and try again.`
+      throw new ApiError(
+        `Ticker "${request.ticker}" not found. Verify the symbol and try again.`,
+        404
       );
     }
     if (res.status === 429) {
-      throw new Error(
-        "Rate limit exceeded. Please wait a moment and try again."
+      throw new ApiError(
+        "Rate limit exceeded. Please wait a moment and try again.",
+        429
       );
     }
     const body = await res.json().catch(() => ({}));
-    throw new Error(
+    throw new ApiError(
       body.detail ||
         (res.status >= 500
           ? "The analysis service is temporarily unavailable. Please try again shortly."
-          : "Analysis failed.")
+          : "Analysis failed."),
+      res.status
     );
   }
 
