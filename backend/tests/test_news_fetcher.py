@@ -5,6 +5,7 @@ import pytest
 
 from app.agents.tools.news_fetcher import (
     _NEWSAPI_FIELD_MAP,
+    _is_english_headline,
     fetch_news_headlines,
     format_headlines,
     get_news_headlines,
@@ -67,6 +68,29 @@ class TestFieldMapping:
     def test_mapping_has_no_duplicate_model_fields(self):
         field_names = [field_name for _, field_name in _NEWSAPI_FIELD_MAP]
         assert len(field_names) == len(set(field_names))
+
+
+# ---- _is_english_headline Tests ----
+
+class TestIsEnglishHeadline:
+    def test_plain_english_passes(self):
+        assert _is_english_headline("Apple Reports Record Revenue in Q4") is True
+
+    def test_empty_string_fails(self):
+        assert _is_english_headline("") is False
+
+    def test_japanese_title_fails(self):
+        # Headline from Applech2.com seen in production
+        assert _is_english_headline(
+            "Belkin、Qi2 25Wワイヤレス充電器とApple Watch充電器を備えコンパクトに収納可能な"
+        ) is False
+
+    def test_mostly_english_with_minor_accents_passes(self):
+        # Accented characters in proper nouns should not disqualify an article
+        assert _is_english_headline("Café chain Starbucks beats AAPL in customer retention") is True
+
+    def test_fully_ascii_passes(self):
+        assert _is_english_headline("AAPL hits new 52-week high") is True
 
 
 # ---- fetch_news_headlines Tests ----
@@ -150,6 +174,48 @@ class TestFetchNewsHeadlines:
 
         with pytest.raises(ValueError, match="NEWS_API_KEY is not configured"):
             fetch_news_headlines("AAPL")
+
+    @patch("app.agents.tools.news_fetcher.settings")
+    @patch("app.agents.tools.news_fetcher.requests.get")
+    def test_skips_non_english_titles(self, mock_get, mock_settings):
+        mock_settings.NEWS_API_KEY = "test-key"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "status": "ok",
+            "articles": [
+                {
+                    "source": {"name": "Applech2"},
+                    "title": "Belkin、Qi2 25Wワイヤレス充電器とApple Watch充電器を備えコンパクト",
+                    "url": "http://applech2.com/1",
+                },
+                {
+                    "source": {"name": "Reuters"},
+                    "title": "Apple reports quarterly earnings",
+                    "url": "http://reuters.com/1",
+                },
+            ],
+        }
+        mock_get.return_value = mock_response
+
+        result = fetch_news_headlines("AAPL")
+
+        assert len(result) == 1
+        assert result[0].title == "Apple reports quarterly earnings"
+
+    @patch("app.agents.tools.news_fetcher.settings")
+    @patch("app.agents.tools.news_fetcher.requests.get")
+    def test_passes_search_in_title_description(self, mock_get, mock_settings, mock_newsapi_response):
+        mock_settings.NEWS_API_KEY = "test-key"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = mock_newsapi_response
+        mock_get.return_value = mock_response
+
+        fetch_news_headlines("AAPL")
+
+        call_params = mock_get.call_args[1]["params"]
+        assert call_params["searchIn"] == "title,description"
 
     @patch("app.agents.tools.news_fetcher.settings")
     @patch("app.agents.tools.news_fetcher.requests.get")

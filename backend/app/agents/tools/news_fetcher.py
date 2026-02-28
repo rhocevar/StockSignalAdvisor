@@ -17,6 +17,11 @@ _NEWSAPI_FIELD_MAP: list[tuple[str, str]] = [
     ("publishedAt", "published_at"),
 ]
 
+# Headlines where more than this fraction of characters are non-ASCII are treated
+# as non-English and discarded. NewsAPI's language filter is unreliable for sources
+# that publish in multiple languages (e.g. Japanese tech blogs).
+_NON_ASCII_THRESHOLD = 0.15
+
 
 def _get_nested(data: dict, dot_path: str) -> Any:
     """Resolve a dot-notation path in a nested dict (e.g. 'source.name')."""
@@ -39,18 +44,39 @@ def _parse_published_at(value: Any) -> datetime | None:
         return None
 
 
+def _is_english_headline(title: str) -> bool:
+    """Return True if the headline is likely written in English.
+
+    Rejects titles where more than 15% of characters are non-ASCII, which
+    catches Japanese, Korean, and Chinese headlines that slip through
+    NewsAPI's language filter on mixed-language publisher domains.
+    """
+    if not title:
+        return False
+    non_ascii = sum(1 for c in title if ord(c) > 127)
+    return non_ascii / len(title) <= _NON_ASCII_THRESHOLD
+
+
 def fetch_news_headlines(ticker: str, max_results: int = 10) -> list[NewsSource]:
     """Fetch recent news headlines for a ticker from NewsAPI."""
     if not settings.NEWS_API_KEY:
         raise ValueError("NEWS_API_KEY is not configured")
+
+    # Request extra articles to have headroom after the language filter removes
+    # non-English results. Capped at NewsAPI's maximum page size of 100.
+    fetch_size = min(max_results * 2, 100)
 
     response = requests.get(
         _NEWSAPI_BASE_URL,
         params={
             "q": ticker,
             "sortBy": "publishedAt",
-            "pageSize": max_results,
+            "pageSize": fetch_size,
             "language": "en",
+            # Restrict matching to title and description — prevents body/content
+            # matches that pull in unrelated results (e.g. PyPI package docs that
+            # reference the ticker in code examples).
+            "searchIn": "title,description",
             "apiKey": settings.NEWS_API_KEY,
         },
         timeout=10,
@@ -66,6 +92,9 @@ def fetch_news_headlines(ticker: str, max_results: int = 10) -> list[NewsSource]
     results: list[NewsSource] = []
 
     for article in articles:
+        if len(results) >= max_results:
+            break
+
         data: dict = {}
         for api_key, field_name in _NEWSAPI_FIELD_MAP:
             data[field_name] = _get_nested(article, api_key)
@@ -73,7 +102,8 @@ def fetch_news_headlines(ticker: str, max_results: int = 10) -> list[NewsSource]
         if data.get("published_at"):
             data["published_at"] = _parse_published_at(data["published_at"])
 
-        if data.get("title"):
+        title = data.get("title")
+        if title and _is_english_headline(title):
             results.append(NewsSource(**data))
 
     return results
