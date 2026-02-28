@@ -6,15 +6,14 @@
 
 AI-powered stock analysis app that delivers **Buy / Hold / Sell** recommendations backed by technical analysis, fundamental metrics, and news sentiment — with full source transparency.
 
+<p align="center">
+  <img src="docs/demo.gif" alt="Stock Signal Advisor Demo" width="800">
+</p>
+
 ## Live Demo
 
 - **Frontend:** https://main.d3gra918usm0j6.amplifyapp.com
 - **API Health:** https://xdvpqzqg4m.us-east-2.awsapprunner.com/api/v1/health
-- **API Docs (Swagger):** available locally at `http://localhost:8000/docs` (disabled in production)
-
-<!-- screenshot: home page with ticker input -->
-
-<!-- screenshot: analysis results page showing BUY signal for AAPL -->
 
 ## Features
 
