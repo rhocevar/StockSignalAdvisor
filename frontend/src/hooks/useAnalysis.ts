@@ -1,9 +1,12 @@
-import { useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { analyzeStock } from "@/lib/api";
-import type { AnalyzeRequest, AnalyzeResponse } from "@/types";
+import type { AnalyzeResponse } from "@/types";
 
-export function useAnalysis() {
-  return useMutation<AnalyzeResponse, Error, AnalyzeRequest>({
-    mutationFn: analyzeStock,
+export function useAnalysis(ticker: string) {
+  return useQuery<AnalyzeResponse, Error>({
+    queryKey: ["analysis", ticker],
+    queryFn: () => analyzeStock({ ticker }),
+    staleTime: 60 * 60 * 1000, // 1 hour — matches backend TTL cache
+    enabled: ticker.length > 0,
   });
 }

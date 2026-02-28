@@ -6,7 +6,7 @@ import type { AnalyzeResponse } from "@/types";
 
 jest.mock("../../hooks/useAnalysis");
 
-const mockMutate = jest.fn();
+const mockRefetch = jest.fn();
 const mockUseAnalysis = useAnalysis as jest.Mock;
 
 const mockData: AnalyzeResponse = {
@@ -38,9 +38,9 @@ const mockData: AnalyzeResponse = {
 
 describe("AnalysisView", () => {
   beforeEach(() => {
-    mockMutate.mockClear();
+    mockRefetch.mockClear();
     mockUseAnalysis.mockReturnValue({
-      mutate: mockMutate,
+      refetch: mockRefetch,
       isPending: false,
       data: undefined,
       error: null,
@@ -49,7 +49,7 @@ describe("AnalysisView", () => {
 
   it("shows LoadingState when isPending is true", () => {
     mockUseAnalysis.mockReturnValue({
-      mutate: mockMutate,
+      refetch: mockRefetch,
       isPending: true,
       data: undefined,
       error: null,
@@ -60,7 +60,7 @@ describe("AnalysisView", () => {
 
   it("shows error panel when error is set", () => {
     mockUseAnalysis.mockReturnValue({
-      mutate: mockMutate,
+      refetch: mockRefetch,
       isPending: false,
       data: undefined,
       error: new Error('Ticker "XYZINVALID" not found.'),
@@ -70,17 +70,17 @@ describe("AnalysisView", () => {
     expect(screen.getByText(/not found/i)).toBeInTheDocument();
   });
 
-  it("shows Try Again button in error state that calls mutate", async () => {
+  it("shows Try Again button in error state that calls refetch", async () => {
     const user = userEvent.setup();
     mockUseAnalysis.mockReturnValue({
-      mutate: mockMutate,
+      refetch: mockRefetch,
       isPending: false,
       data: undefined,
       error: new Error("Something went wrong"),
     });
     render(<AnalysisView ticker="AAPL" />);
     await user.click(screen.getByRole("button", { name: /try again/i }));
-    expect(mockMutate).toHaveBeenCalledWith({ ticker: "AAPL" });
+    expect(mockRefetch).toHaveBeenCalled();
   });
 
   it("renders nothing when not pending and no data or error", () => {
@@ -92,7 +92,7 @@ describe("AnalysisView", () => {
 
   it("renders signal card when analysis data is present", () => {
     mockUseAnalysis.mockReturnValue({
-      mutate: mockMutate,
+      refetch: mockRefetch,
       isPending: false,
       data: mockData,
       error: null,

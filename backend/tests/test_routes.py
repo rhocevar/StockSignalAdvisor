@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from app.enums import MacdSignal, SentimentType, SignalType, TrendDirection, VolumeTrend
@@ -68,6 +69,14 @@ _SAMPLE_ANALYZE_RESPONSE = AnalyzeResponse(
 
 
 class TestAnalyzeEndpoint:
+    @pytest.fixture(autouse=True)
+    def bypass_uncached_rate_limit(self):
+        # Patch get_cached so every request in this class appears cached,
+        # preventing the per-IP uncached counter from being incremented and
+        # causing spurious 429s across tests.
+        with patch("app.api.routes.analysis.get_cached", return_value=_SAMPLE_ANALYZE_RESPONSE):
+            yield
+
     @patch(
         "app.api.routes.analysis._orchestrator.analyze",
         new_callable=AsyncMock,
@@ -132,6 +141,43 @@ class TestAnalyzeEndpoint:
     def test_analyze_service_error_returns_502(self, mock_analyze):
         response = client.post("/api/v1/signal", json={"ticker": "AAPL"})
         assert response.status_code == 502
+
+
+class TestAnalyzeRateLimiting:
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        return_value=_SAMPLE_ANALYZE_RESPONSE,
+    )
+    @patch(
+        "app.api.routes.analysis.check_uncached_rate_limit",
+        side_effect=HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please wait a minute before requesting a new analysis.",
+        ),
+    )
+    @patch("app.api.routes.analysis.get_cached", return_value=None)
+    def test_uncached_request_returns_429_when_rate_limited(
+        self, mock_cache, mock_rate_limit, mock_analyze
+    ):
+        response = client.post("/api/v1/signal", json={"ticker": "AAPL"})
+        assert response.status_code == 429
+        assert "rate limit" in response.json()["detail"].lower()
+        mock_analyze.assert_not_called()
+
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        return_value=_SAMPLE_ANALYZE_RESPONSE,
+    )
+    @patch("app.api.routes.analysis.check_uncached_rate_limit")
+    @patch("app.api.routes.analysis.get_cached", return_value=_SAMPLE_ANALYZE_RESPONSE)
+    def test_cached_request_bypasses_uncached_rate_limit(
+        self, mock_cache, mock_rate_limit, mock_analyze
+    ):
+        response = client.post("/api/v1/signal", json={"ticker": "AAPL"})
+        assert response.status_code == 200
+        mock_rate_limit.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

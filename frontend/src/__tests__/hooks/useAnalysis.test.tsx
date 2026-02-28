@@ -1,5 +1,5 @@
 import React from "react";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { analyzeStock } from "@/lib/api";
@@ -38,7 +38,7 @@ const mockResponse: AnalyzeResponse = {
 
 function createWrapper() {
   const queryClient = new QueryClient({
-    defaultOptions: { mutations: { retry: false } },
+    defaultOptions: { queries: { retry: false } },
   });
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
@@ -52,52 +52,50 @@ describe("useAnalysis", () => {
     jest.resetAllMocks();
   });
 
-  it("starts in idle state with no data or error", () => {
-    const { result } = renderHook(() => useAnalysis(), {
+  it("starts loading immediately when ticker is provided", () => {
+    mockAnalyzeStock.mockResolvedValue(mockResponse);
+    const { result } = renderHook(() => useAnalysis("AAPL"), {
       wrapper: createWrapper(),
     });
-    expect(result.current.isPending).toBe(false);
+    expect(result.current.isPending).toBe(true);
     expect(result.current.data).toBeUndefined();
     expect(result.current.error).toBeNull();
   });
 
-  it("returns parsed response on successful mutation", async () => {
+  it("returns parsed response on successful query", async () => {
     mockAnalyzeStock.mockResolvedValue(mockResponse);
-    const { result } = renderHook(() => useAnalysis(), {
+    const { result } = renderHook(() => useAnalysis("AAPL"), {
       wrapper: createWrapper(),
     });
 
-    act(() => {
-      result.current.mutate({ ticker: "AAPL" });
-    });
-
-    // Use waitFor because mutate() is fire-and-forget — the async work settles
-    // after the act() call returns.
     await waitFor(() => {
       expect(result.current.data).toEqual(mockResponse);
     });
 
-    // TanStack Query v5 passes a context object as a second arg to mutationFn;
-    // check only the first argument (the caller-supplied variables).
-    expect(mockAnalyzeStock.mock.calls[0][0]).toEqual({ ticker: "AAPL" });
+    expect(mockAnalyzeStock).toHaveBeenCalledWith({ ticker: "AAPL" });
     expect(result.current.error).toBeNull();
   });
 
-  it("exposes error when mutation rejects", async () => {
+  it("exposes error when query rejects", async () => {
     const err = new Error('Ticker "INVALID" not found.');
     mockAnalyzeStock.mockRejectedValue(err);
-    const { result } = renderHook(() => useAnalysis(), {
+    const { result } = renderHook(() => useAnalysis("INVALID"), {
       wrapper: createWrapper(),
-    });
-
-    act(() => {
-      result.current.mutate({ ticker: "INVALID" });
     });
 
     await waitFor(() => {
       expect(result.current.error).toEqual(err);
     });
 
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it("does not fetch when ticker is empty", () => {
+    const { result } = renderHook(() => useAnalysis(""), {
+      wrapper: createWrapper(),
+    });
+    // enabled: false — no fetch should fire
+    expect(mockAnalyzeStock).not.toHaveBeenCalled();
     expect(result.current.data).toBeUndefined();
   });
 });

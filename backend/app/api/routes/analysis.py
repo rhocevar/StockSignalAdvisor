@@ -6,7 +6,8 @@ from app.agents.orchestrator import StockAnalysisOrchestrator
 from app.models.request import AnalyzeRequest
 from app.models.response import AnalyzeResponse
 from app.providers.llm.base import LLMRateLimitError
-from app.services.limiter import limiter
+from app.services.cache import get_cached
+from app.services.limiter import check_uncached_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,11 @@ _orchestrator = StockAnalysisOrchestrator()
 
 
 @router.post("/signal", response_model=AnalyzeResponse)
-@limiter.limit("5/minute")
 async def analyze_stock(request: Request, body: AnalyzeRequest) -> AnalyzeResponse:
+    # Only count requests toward the rate limit when they will hit the LLM.
+    # Cached responses are cheap memory lookups and need no throttling.
+    if not get_cached(body.ticker):
+        check_uncached_rate_limit(request)
     try:
         return await _orchestrator.analyze(body)
     except ValueError as e:
