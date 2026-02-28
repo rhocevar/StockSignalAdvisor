@@ -12,7 +12,7 @@ AI-powered stock analysis app that delivers **Strong Buy / Buy / Hold / Sell / S
 
 ## Live Demo
 
-- **Frontend:** https://main.d3gra918usm0j6.amplifyapp.com
+- **Frontend:** https://stock-signal-advisor.rafaelhocevar.com
 - **API Health:** https://xdvpqzqg4m.us-east-2.awsapprunner.com/api/v1/health
 
 ## Features

@@ -9,7 +9,7 @@
                          │ HTTPS
 ┌────────────────────────▼────────────────────────────────┐
 │              AWS Amplify (Next.js 14 SSR)               │
-│         https://main.d3gra918usm0j6.amplifyapp.com      │
+│      https://stock-signal-advisor.rafaelhocevar.com      │
 │                                                         │
 │  / (home)           → TickerInput                       │
 │  /analyze/[ticker]  → AnalysisView (React Query)        │
