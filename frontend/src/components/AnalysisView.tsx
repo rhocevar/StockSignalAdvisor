@@ -29,8 +29,8 @@ export function AnalysisView({ ticker }: AnalysisViewProps) {
   const { isPending, data, error, refetch } = useAnalysis(ticker);
 
   useEffect(() => {
-    saveRecentTicker(ticker);
-  }, [ticker]);
+    if (data) saveRecentTicker(ticker);
+  }, [data, ticker]);
 
   if (isPending) {
     return <LoadingState />;

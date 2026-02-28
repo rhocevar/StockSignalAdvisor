@@ -122,6 +122,10 @@ class StockAnalysisOrchestrator:
         for key, task in tasks.items():
             try:
                 results[key] = await task
+            except ValueError as e:
+                # Expected domain errors (e.g. ticker not found) — no traceback
+                logger.warning("Failed to gather %s for %s: %s", key, ticker, e)
+                results[key] = None
             except Exception:
                 logger.exception("Failed to gather %s for %s", key, ticker)
                 results[key] = None
