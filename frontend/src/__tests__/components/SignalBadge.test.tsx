@@ -22,4 +22,18 @@ describe("SignalBadge", () => {
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass("text-amber-700");
   });
+
+  it("renders STRONG BUY with dark green styling", () => {
+    render(<SignalBadge signal="STRONG_BUY" />);
+    const badge = screen.getByText("STRONG BUY");
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass("text-green-800");
+  });
+
+  it("renders STRONG SELL with dark red styling", () => {
+    render(<SignalBadge signal="STRONG_SELL" />);
+    const badge = screen.getByText("STRONG SELL");
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass("text-red-800");
+  });
 });

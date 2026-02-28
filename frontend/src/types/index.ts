@@ -1,5 +1,5 @@
 // Enums (matching backend app/enums.py)
-export type SignalType = "BUY" | "HOLD" | "SELL";
+export type SignalType = "STRONG_BUY" | "BUY" | "HOLD" | "SELL" | "STRONG_SELL";
 export type SentimentType = "positive" | "negative" | "neutral" | "mixed";
 export type TrendDirection = "above" | "below";
 export type MacdSignal = "bullish" | "bearish" | "neutral";

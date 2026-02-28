@@ -91,6 +91,30 @@ class TestParseAgentOutput:
         result = _parse_agent_output(output)
         assert result.confidence == 0.0
 
+    def test_parses_strong_buy_signal(self):
+        from app.agents.agent import _parse_agent_output
+
+        output = json.dumps({
+            "signal": "STRONG_BUY",
+            "confidence": 0.92,
+            "explanation": "Overwhelming bullish conviction.",
+        })
+        result = _parse_agent_output(output)
+        assert result.signal == SignalType.STRONG_BUY
+        assert result.confidence == 0.92
+
+    def test_parses_strong_sell_signal(self):
+        from app.agents.agent import _parse_agent_output
+
+        output = json.dumps({
+            "signal": "STRONG_SELL",
+            "confidence": 0.10,
+            "explanation": "Overwhelming bearish conviction.",
+        })
+        result = _parse_agent_output(output)
+        assert result.signal == SignalType.STRONG_SELL
+        assert result.confidence == 0.10
+
     def test_invalid_signal_defaults_to_hold(self):
         from app.agents.agent import _parse_agent_output
 

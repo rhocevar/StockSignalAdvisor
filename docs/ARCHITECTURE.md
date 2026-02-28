@@ -59,7 +59,7 @@ The core of the recommendation engine. Each pillar produces a score from 0.0 (be
 confidence = Σ (pillar_score × pillar_weight)
 ```
 
-The LangChain agent's own signal (BUY/HOLD/SELL) determines the recommendation direction; the orchestrator computes the weighted confidence independently from pillar scores.
+The LangChain agent's own signal (STRONG_BUY/BUY/HOLD/SELL/STRONG_SELL) determines the recommendation direction; the orchestrator computes the weighted confidence independently from pillar scores.
 
 ### Scoring Logic
 
@@ -129,7 +129,7 @@ The agent (`agents/agent.py`) uses LangGraph's runtime with `create_agent` to im
 2. Agent receives system prompt with three-pillar framework
 3. Agent iteratively calls tools (ReAct loop)
 4. Agent consults RAG for domain context
-5. Agent synthesizes BUY/HOLD/SELL + explanation
+5. Agent synthesizes STRONG_BUY/BUY/HOLD/SELL/STRONG_SELL + explanation
 6. Orchestrator parses AgentResult, computes weighted confidence
 ```
 
@@ -211,7 +211,7 @@ Headlines are fetched by ticker + company name query. Up to 10 articles are retr
 ### Stack
 
 - **Next.js 14** App Router — SSR for fast initial load, client components for interactivity
-- **React Query** (`useMutation`) — analysis triggered on demand, not on page load
+- **React Query** (`useQuery`) — analysis triggered on mount, deduplicated by ticker key
 - **shadcn/ui** — accessible component primitives (Button, Card, Input, Badge)
 - **Recharts** — price history line chart (`PriceChart` component)
 - **Tailwind CSS** — utility-first styling
@@ -227,7 +227,7 @@ Headlines are fetched by ticker + company name query. Up to 10 articles are retr
         ├── LoadingState   ← animated spinner + cycling status messages
         ├── [error panel]  ← inline error with Try Again button
         └── [results]
-              ├── SignalCard          ← BUY/HOLD/SELL + confidence + price
+              ├── SignalCard          ← STRONG_BUY/BUY/HOLD/SELL/STRONG_SELL + confidence + price
               │     └── SignalBadge  ← colored badge
               ├── PriceChart         ← 30-day line chart (Recharts)
               ├── TechnicalIndicators← RSI, MACD, SMA, volume trend
@@ -241,8 +241,8 @@ Headlines are fetched by ticker + company name query. Up to 10 articles are retr
 
 ```
 User types ticker → TickerInput → router.push("/analyze/AAPL")
-Page loads → AnalysisView mounts → useAnalysis() returns { mutate, isPending, data, error }
-AnalysisView calls mutate("AAPL") → fetch POST /api/v1/signal → backend
+Page loads → AnalysisView mounts → useAnalysis("AAPL") returns { isPending, data, error, refetch }
+React Query fires fetch POST /api/v1/signal → backend (deduplicated for same ticker)
 Response → React Query updates state → components re-render with data
 ```
 

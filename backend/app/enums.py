@@ -41,9 +41,11 @@ class AnthropicModel(str, Enum):
 
 
 class SignalType(str, Enum):
+    STRONG_BUY = "STRONG_BUY"
     BUY = "BUY"
     HOLD = "HOLD"
     SELL = "SELL"
+    STRONG_SELL = "STRONG_SELL"
 
 
 class SentimentType(str, Enum):

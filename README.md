@@ -4,7 +4,7 @@
 ![Python](https://img.shields.io/badge/python-3.11+-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black)
 
-AI-powered stock analysis app that delivers **Buy / Hold / Sell** recommendations backed by technical analysis, fundamental metrics, and news sentiment — with full source transparency.
+AI-powered stock analysis app that delivers **Strong Buy / Buy / Hold / Sell / Strong Sell** recommendations backed by technical analysis, fundamental metrics, and news sentiment — with full source transparency.
 
 <p align="center">
   <img src="docs/demo.gif" alt="Stock Signal Advisor Demo" width="800">
@@ -142,7 +142,7 @@ See `.env.example` for the full template.
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v1/health` | GET | Service health + provider status |
-| `/api/v1/signal` | POST | Full stock analysis → Buy/Hold/Sell |
+| `/api/v1/signal` | POST | Full stock analysis → Strong Buy/Buy/Hold/Sell/Strong Sell |
 | `/api/v1/tools/stock-price/{ticker}` | GET | Current price and 52-week range |
 | `/api/v1/tools/company-name/{ticker}` | GET | Company name lookup |
 | `/api/v1/tools/technicals/{ticker}` | GET | RSI, MACD, SMA indicators |

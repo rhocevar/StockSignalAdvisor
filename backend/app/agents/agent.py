@@ -220,7 +220,8 @@ async def run_agent(ticker: str) -> AgentResult:
     )
 
     user_message = (
-        f"Analyze the stock {ticker} and provide a BUY/HOLD/SELL recommendation "
+        f"Analyze the stock {ticker} and provide a recommendation using the "
+        f"five-point signal scale (STRONG_BUY / BUY / HOLD / SELL / STRONG_SELL) "
         f"with confidence score and explanation. Use the available tools to gather "
         f"price data, technical indicators, fundamentals, news, and sentiment. "
         f"Also search the knowledge base for relevant financial analysis context."

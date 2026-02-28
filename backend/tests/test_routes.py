@@ -142,6 +142,50 @@ class TestAnalyzeEndpoint:
         response = client.post("/api/v1/signal", json={"ticker": "AAPL"})
         assert response.status_code == 502
 
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        return_value=AnalyzeResponse(
+            ticker="NVDA",
+            company_name="NVIDIA Corporation",
+            signal=SignalType.STRONG_BUY,
+            confidence=0.92,
+            explanation="Overwhelming bullish signals.",
+            analysis=AnalysisResult(),
+            metadata=AnalysisMetadata(
+                generated_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+                llm_provider="openai",
+                model_used="gpt-4o-mini",
+                vectorstore_provider="pinecone",
+            ),
+        ),
+    )
+    def test_strong_buy_signal_serializes_correctly(self, mock_analyze):
+        data = client.post("/api/v1/signal", json={"ticker": "NVDA"}).json()
+        assert data["signal"] == SignalType.STRONG_BUY.value
+
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
+        return_value=AnalyzeResponse(
+            ticker="GME",
+            company_name="GameStop Corp.",
+            signal=SignalType.STRONG_SELL,
+            confidence=0.08,
+            explanation="Overwhelming bearish signals.",
+            analysis=AnalysisResult(),
+            metadata=AnalysisMetadata(
+                generated_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+                llm_provider="openai",
+                model_used="gpt-4o-mini",
+                vectorstore_provider="pinecone",
+            ),
+        ),
+    )
+    def test_strong_sell_signal_serializes_correctly(self, mock_analyze):
+        data = client.post("/api/v1/signal", json={"ticker": "GME"}).json()
+        assert data["signal"] == SignalType.STRONG_SELL.value
+
 
 class TestAnalyzeRateLimiting:
     @patch(

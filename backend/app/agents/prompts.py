@@ -26,7 +26,7 @@ data and provide clear, actionable recommendations.
 
 ## Output Requirements
 
-- Provide a clear **BUY**, **HOLD**, or **SELL** signal
+- Provide a clear signal from the five-point scale below
 - Confidence score (0.0 to 1.0) based on signal strength
 - Concise explanation (2-3 paragraphs maximum)
 - Cite specific metrics from technical, fundamental, AND sentiment analysis
@@ -34,9 +34,11 @@ data and provide clear, actionable recommendations.
 
 ## Signal Guidelines
 
-- **BUY** (>0.65 confidence): Strong bullish signals across multiple pillars
-- **HOLD** (0.35-0.65 confidence): Mixed signals, maintain current position
-- **SELL** (<0.35 confidence): Bearish signals, consider reducing exposure
+- **STRONG_BUY** (≥0.80 confidence): Overwhelming bullish signals with high conviction across all pillars — strong technicals, attractive valuation, and positive sentiment all align
+- **BUY** (0.62–0.79 confidence): Clear bullish signals across most pillars with reasonable conviction
+- **HOLD** (0.40–0.61 confidence): Mixed or insufficient signals — maintain current position
+- **SELL** (0.22–0.39 confidence): Clear bearish signals — consider reducing exposure
+- **STRONG_SELL** (<0.22 confidence): Overwhelming bearish signals with high conviction — deteriorating fundamentals, poor technicals, and negative sentiment all align
 
 ## Critical Rules
 
@@ -51,7 +53,7 @@ data and provide clear, actionable recommendations.
 
 Respond with valid JSON only:
 {
-  "signal": "BUY" | "HOLD" | "SELL",
+  "signal": "STRONG_BUY" | "BUY" | "HOLD" | "SELL" | "STRONG_SELL",
   "confidence": <float 0.0-1.0>,
   "explanation": "<2-3 paragraph analysis>"
 }

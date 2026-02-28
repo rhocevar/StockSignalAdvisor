@@ -64,7 +64,7 @@ curl -X POST https://xdvpqzqg4m.us-east-2.awsapprunner.com/api/v1/signal \
 {
   "ticker": "AAPL",
   "company_name": "Apple Inc.",
-  "signal": "BUY",
+  "signal": "STRONG_BUY",
   "confidence": 0.72,
   "explanation": "Apple shows strong technical momentum with RSI at 58 (neutral-bullish) and price above both 50-day and 200-day moving averages...",
   "analysis": {
@@ -138,7 +138,7 @@ curl -X POST https://xdvpqzqg4m.us-east-2.awsapprunner.com/api/v1/signal \
 }
 ```
 
-**Signal values:** `BUY` | `HOLD` | `SELL`
+**Signal values:** `STRONG_BUY` | `BUY` | `HOLD` | `SELL` | `STRONG_SELL`
 
 **Confidence:** float from `0.0` to `1.0` — weighted average of pillar scores, dynamically reweighted based on which pillars are available.
 

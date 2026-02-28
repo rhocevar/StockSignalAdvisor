@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-**Stock Signal Advisor** — AI-powered stock analysis app providing Buy/Hold/Sell recommendations.
+**Stock Signal Advisor** — AI-powered stock analysis app providing Strong Buy/Buy/Hold/Sell/Strong Sell recommendations.
 - **Frontend:** Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui + Recharts v3.7.0
 - **Backend:** FastAPI (Python 3.11+) + LangChain + LangGraph
 - **Hosting:** AWS Amplify (frontend) + AWS App Runner (backend)
@@ -57,7 +57,7 @@ docs/              → Documentation
 | `providers/vectorstore/` | Swappable vector store abstraction | `base.py` (Document, VectorStoreProvider), `pinecone.py`, `factory.py` |
 | `agents/tools/` | Data fetching + indicator calculations | `stock_data.py` (yfinance wrapper), `technical.py` (RSI, MACD, SMA), `fundamentals.py` (scoring), `sentiment.py` (LLM sentiment) |
 | `agents/prompts.py` | System prompts for LLM calls | `ANALYSIS_SYSTEM_PROMPT` (three-pillar), `SENTIMENT_SYSTEM_PROMPT` (headline classification) |
-| `agents/agent.py` | LangChain ReAct agent | `run_agent(ticker)` → BUY/HOLD/SELL via `create_agent` (LangGraph), 6 tools |
+| `agents/agent.py` | LangChain ReAct agent | `run_agent(ticker)` → STRONG_BUY/BUY/HOLD/SELL/STRONG_SELL via `create_agent` (LangGraph), 6 tools |
 | `agents/orchestrator.py` | Analysis orchestrator | `StockAnalysisOrchestrator.analyze()` — parallel data gathering, shared yf.Ticker, dynamic pillar reweighting, caching |
 | `services/cache.py` | TTL cache | `get_cached()`, `set_cached()`, `clear_cache()` — cachetools.TTLCache keyed by ticker |
 | `rag/` | RAG pipeline (embed, index, retrieve) | `embeddings.py` (generate_embedding, embed_documents), `indexer.py` (index_documents, delete_documents), `retriever.py` (retrieve, retrieve_context) |
@@ -103,7 +103,7 @@ docs/              → Documentation
 - `LLMProviderType` — OPENAI, ANTHROPIC
 - `VectorStoreProviderType` — PINECONE, QDRANT, PGVECTOR
 - `DocumentType` — NEWS, FINANCIAL_REPORT, ANALYSIS, EARNINGS, SEC_FILING
-- `SignalType` — BUY, HOLD, SELL
+- `SignalType` — STRONG_BUY, BUY, HOLD, SELL, STRONG_SELL
 - `SentimentType` — POSITIVE, NEGATIVE, NEUTRAL, MIXED
 - `OpenAIModel`, `AnthropicModel`, `OpenAIEmbeddingModel` — model identifiers
 - `TrendDirection`, `MacdSignal`, `VolumeTrend` — technical analysis enums
