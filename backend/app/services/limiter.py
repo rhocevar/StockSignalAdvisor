@@ -47,3 +47,16 @@ def check_uncached_rate_limit(request: Request) -> None:
             status_code=429,
             detail="Rate limit exceeded. Please wait a minute before requesting a new analysis.",
         )
+
+
+def refund_uncached_rate_limit(request: Request) -> None:
+    """Decrement the uncached counter for this IP.
+
+    Called when a request fails before reaching the LLM (e.g. ticker not found),
+    so that a mistyped ticker does not consume a slot from the user's allowance.
+    """
+    ip = _get_real_ip(request)
+    with _counter_lock:
+        count = _uncached_counter.get(ip, 0)
+        if count > 0:
+            _uncached_counter[ip] = count - 1

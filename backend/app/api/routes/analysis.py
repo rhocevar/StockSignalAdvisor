@@ -7,7 +7,7 @@ from app.models.request import AnalyzeRequest
 from app.models.response import AnalyzeResponse
 from app.providers.llm.base import LLMRateLimitError
 from app.services.cache import get_cached
-from app.services.limiter import check_uncached_rate_limit
+from app.services.limiter import check_uncached_rate_limit, refund_uncached_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,9 @@ async def analyze_stock(request: Request, body: AnalyzeRequest) -> AnalyzeRespon
     try:
         return await _orchestrator.analyze(body)
     except ValueError as e:
+        # Ticker not found — the LLM was never called, so refund the rate-limit
+        # slot to avoid punishing users for typos.
+        refund_uncached_rate_limit(request)
         raise HTTPException(status_code=404, detail=str(e))
     except LLMRateLimitError:
         raise HTTPException(

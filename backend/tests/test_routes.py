@@ -147,6 +147,21 @@ class TestAnalyzeRateLimiting:
     @patch(
         "app.api.routes.analysis._orchestrator.analyze",
         new_callable=AsyncMock,
+        side_effect=ValueError("Ticker 'NDVA' not found."),
+    )
+    @patch("app.api.routes.analysis.refund_uncached_rate_limit")
+    @patch("app.api.routes.analysis.get_cached", return_value=None)
+    def test_invalid_ticker_refunds_rate_limit_slot(
+        self, mock_cache, mock_refund, mock_analyze
+    ):
+        response = client.post("/api/v1/signal", json={"ticker": "NDVA"})
+        assert response.status_code == 404
+        mock_refund.assert_called_once()
+
+
+    @patch(
+        "app.api.routes.analysis._orchestrator.analyze",
+        new_callable=AsyncMock,
         return_value=_SAMPLE_ANALYZE_RESPONSE,
     )
     @patch(
