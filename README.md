@@ -24,6 +24,7 @@ AI-powered stock analysis app that delivers **Buy / Hold / Sell** recommendation
 - **Provider abstraction** — swap OpenAI ↔ Anthropic and Pinecone ↔ Qdrant ↔ pgvector with a single config change
 - **TTL caching** — results cached for 1 hour to minimize API costs
 - **SSR frontend** — Next.js 14 App Router with server-side rendering, deployed on AWS Amplify
+- **Seamless navigation** — sticky search header on results pages; recent searches history on the home page; shareable analysis URLs
 
 ## Architecture
 

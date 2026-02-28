@@ -11,6 +11,15 @@ import { FundamentalsCard } from "@/components/FundamentalsCard";
 import { SourcesList } from "@/components/SourcesList";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Button } from "@/components/ui/button";
+import { saveRecentTicker } from "@/components/RecentSearches";
+
+function formatRelativeTime(isoString: string): string {
+  const diffMin = Math.floor((Date.now() - new Date(isoString).getTime()) / 60_000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  return diffHr === 1 ? "1 hour ago" : `${diffHr} hours ago`;
+}
 
 interface AnalysisViewProps {
   ticker: string;
@@ -25,6 +34,7 @@ export function AnalysisView({ ticker }: AnalysisViewProps) {
   // absorbs the duplicate immediately, making it harmless.
   useEffect(() => {
     mutate({ ticker });
+    saveRecentTicker(ticker);
   }, [ticker, mutate]);
 
   if (isPending) {
@@ -77,6 +87,20 @@ export function AnalysisView({ ticker }: AnalysisViewProps) {
       )}
       <SourcesList sources={data.sources} />
       <Disclaimer />
+      <div className="text-xs text-muted-foreground text-center space-y-0.5 mt-2 pb-2">
+        <p>
+          {data.metadata.model_used} · {data.metadata.llm_provider} · {data.metadata.vectorstore_provider}
+        </p>
+        <p>
+          <span
+            className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle ${
+              data.metadata.cached ? "bg-amber-400" : "bg-green-500"
+            }`}
+          />
+          {data.metadata.cached ? "Cached result" : "Live analysis"}
+          {" · "}Generated {formatRelativeTime(data.metadata.generated_at)}
+        </p>
+      </div>
     </div>
   );
 }

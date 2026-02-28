@@ -1,4 +1,9 @@
+"use client";
+
+import { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { SignalBadge } from "@/components/SignalBadge";
 import { cn } from "@/lib/utils";
 import type { PriceData, SignalType } from "@/types";
@@ -34,8 +39,15 @@ export function SignalCard({
   confidence,
   priceData,
 }: SignalCardProps) {
+  const [copied, setCopied] = useState(false);
   const change1d = priceData?.change_percent_1d ?? null;
   const isPositiveChange = change1d !== null && change1d >= 0;
+
+  function handleShare() {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   return (
     <Card>
@@ -47,7 +59,22 @@ export function SignalCard({
               <p className="text-sm text-muted-foreground mt-1">{companyName}</p>
             )}
           </div>
-          <SignalBadge signal={signal} />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShare}
+              title={copied ? "Copied!" : "Copy link"}
+              className="h-7 w-7"
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+            </Button>
+            <SignalBadge signal={signal} />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

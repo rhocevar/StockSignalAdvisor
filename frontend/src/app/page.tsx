@@ -1,4 +1,5 @@
 import { TickerInput } from "@/components/TickerInput";
+import { RecentSearches } from "@/components/RecentSearches";
 
 export default function Home() {
   return (
@@ -13,7 +14,10 @@ export default function Home() {
             insights.
           </p>
         </div>
-        <TickerInput />
+        <div>
+          <TickerInput />
+          <RecentSearches />
+        </div>
       </div>
     </main>
   );
