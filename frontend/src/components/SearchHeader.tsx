@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, type KeyboardEvent } from "react";
+import { useState, useEffect, useTransition, type KeyboardEvent } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { LoaderCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export function SearchHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const currentTicker =
     pathname.split("/analyze/")[1]?.toUpperCase() ?? "";
@@ -28,7 +30,9 @@ export function SearchHeader() {
   function handleSubmit() {
     const trimmed = ticker.trim();
     if (!trimmed) return;
-    router.push(`/analyze/${trimmed}`);
+    startTransition(() => {
+      router.push(`/analyze/${trimmed}`);
+    });
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -57,10 +61,15 @@ export function SearchHeader() {
           />
           <Button
             onClick={handleSubmit}
-            disabled={ticker.trim().length === 0}
+            disabled={ticker.trim().length === 0 || isPending}
             size="sm"
+            className="min-w-20"
           >
-            Analyze
+            {isPending ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              "Analyze"
+            )}
           </Button>
         </div>
       </div>

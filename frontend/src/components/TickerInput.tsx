@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useState, useTransition, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
+import { LoaderCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export function TickerInput() {
   const [ticker, setTicker] = useState<string>("");
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -17,7 +19,9 @@ export function TickerInput() {
   function handleSubmit() {
     const trimmed = ticker.trim();
     if (!trimmed) return;
-    router.push(`/analyze/${trimmed}`);
+    startTransition(() => {
+      router.push(`/analyze/${trimmed}`);
+    });
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -38,8 +42,16 @@ export function TickerInput() {
         aria-label="Stock ticker symbol"
         className="font-mono text-base tracking-widest uppercase"
       />
-      <Button onClick={handleSubmit} disabled={ticker.trim().length === 0}>
-        Analyze
+      <Button
+        onClick={handleSubmit}
+        disabled={ticker.trim().length === 0 || isPending}
+        className="min-w-[5.5rem]"
+      >
+        {isPending ? (
+          <LoaderCircle className="h-4 w-4 animate-spin" />
+        ) : (
+          "Analyze"
+        )}
       </Button>
     </div>
   );
