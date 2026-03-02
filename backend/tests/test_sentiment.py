@@ -47,9 +47,9 @@ def _make_provider(response_data: dict) -> MagicMock:
 
 _HAPPY_RESPONSE = {
     "headlines": [
-        {"index": 0, "sentiment": "positive"},
-        {"index": 1, "sentiment": "negative"},
-        {"index": 2, "sentiment": "neutral"},
+        {"index": 0, "relevant": True, "sentiment": "positive"},
+        {"index": 1, "relevant": True, "sentiment": "negative"},
+        {"index": 2, "relevant": True, "sentiment": "neutral"},
     ],
     "overall": "mixed",
     "score": 0.55,
@@ -204,7 +204,7 @@ class TestAnalyzeSentiment:
 
         assert updated[0].sentiment == SentimentType.POSITIVE
         assert result.positive_count == 1
-        assert result.negative_count == 1
+        assert result.negative_count == 0  # out-of-range index is fully ignored
 
     @pytest.mark.asyncio
     @patch("app.agents.tools.sentiment.get_llm_provider")
@@ -223,6 +223,69 @@ class TestAnalyzeSentiment:
 
         assert updated[0].sentiment == SentimentType.NEUTRAL
         assert result.neutral_count == 1
+
+    @pytest.mark.asyncio
+    @patch("app.agents.tools.sentiment.get_llm_provider")
+    async def test_irrelevant_articles_excluded_from_counts(self, mock_factory):
+        data = {
+            "headlines": [
+                {"index": 0, "relevant": True, "sentiment": "positive"},
+                {"index": 1, "relevant": False},  # sponsor mention — irrelevant
+            ],
+            "overall": "positive",
+            "score": 0.75,
+        }
+        mock_factory.return_value = _make_provider(data)
+
+        from app.agents.tools.sentiment import analyze_sentiment
+
+        result, _ = await analyze_sentiment(_make_headlines(2))
+
+        assert result.positive_count == 1
+        assert result.negative_count == 0
+        assert result.neutral_count == 0
+
+    @pytest.mark.asyncio
+    @patch("app.agents.tools.sentiment.get_llm_provider")
+    async def test_irrelevant_articles_excluded_from_returned_list(self, mock_factory):
+        data = {
+            "headlines": [
+                {"index": 0, "relevant": True, "sentiment": "positive"},
+                {"index": 1, "relevant": False},
+                {"index": 2, "relevant": True, "sentiment": "neutral"},
+            ],
+            "overall": "positive",
+            "score": 0.65,
+        }
+        mock_factory.return_value = _make_provider(data)
+
+        from app.agents.tools.sentiment import analyze_sentiment
+
+        headlines = _make_headlines(3)
+        _, relevant = await analyze_sentiment(headlines)
+
+        # Only indices 0 and 2 are relevant; index 1 must be absent
+        assert len(relevant) == 2
+        assert relevant[0].title == headlines[0].title
+        assert relevant[1].title == headlines[2].title
+
+    @pytest.mark.asyncio
+    @patch("app.agents.tools.sentiment.get_llm_provider")
+    async def test_company_context_passed_to_llm(self, mock_factory):
+        provider = _make_provider(_HAPPY_RESPONSE)
+        mock_factory.return_value = provider
+
+        from app.agents.tools.sentiment import analyze_sentiment
+
+        await analyze_sentiment(
+            _make_headlines(3), ticker="AAPL", company_name="Apple Inc."
+        )
+
+        call_args = provider.complete.call_args
+        messages = call_args.kwargs.get("messages") or call_args.args[0]
+        user_content = next(m.content for m in messages if m.role.value == "user")
+        assert "Apple Inc." in user_content
+        assert "AAPL" in user_content
 
 
 class TestPrompts:

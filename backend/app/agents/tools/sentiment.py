@@ -33,12 +33,15 @@ _SENTIMENT_MAP = {
 
 async def analyze_sentiment(
     headlines: list[NewsSource],
+    ticker: str = "",
+    company_name: str | None = None,
 ) -> SentimentResult:
     """Classify news headlines via LLM and return aggregated sentiment.
 
-    Returns a tuple of (SentimentAnalysis, updated_headlines) where each
-    NewsSource in updated_headlines has its sentiment field populated.
-    The original list is not mutated.
+    Returns a tuple of (SentimentAnalysis, relevant_headlines) where:
+    - Only articles the LLM considers relevant to the company are returned.
+    - Sentiment counts and score are based on relevant articles only.
+    - The original list is not mutated.
     """
     if not headlines:
         return _NEUTRAL_FALLBACK.model_copy(), []
@@ -46,7 +49,18 @@ async def analyze_sentiment(
     numbered = "\n".join(
         f"{i}. {h.title}" for i, h in enumerate(headlines)
     )
-    user_message = f"Classify the sentiment of these headlines:\n\n{numbered}"
+
+    if company_name and ticker:
+        company_context = f"{company_name} (ticker: {ticker})"
+    elif ticker:
+        company_context = ticker
+    else:
+        company_context = "the company"
+
+    user_message = (
+        f"Company: {company_context}\n\n"
+        f"Classify the sentiment of these headlines:\n\n{numbered}"
+    )
 
     llm = get_llm_provider()
     response = await llm.complete(
@@ -65,14 +79,22 @@ async def analyze_sentiment(
         logger.warning("Failed to parse sentiment LLM response as JSON")
         return _NEUTRAL_FALLBACK.model_copy(), list(headlines)
 
-    # Build updated copies of each NewsSource with per-headline sentiments
-    updated: list[NewsSource] = list(headlines)
+    # Build updated copies of each NewsSource with per-headline sentiments;
+    # collect only relevant articles in the returned list.
+    updated_map: dict[int, NewsSource] = {}
     positive = 0
     negative = 0
     neutral = 0
 
     for item in data.get("headlines", []):
         idx = item.get("index")
+        if not isinstance(idx, int) or not (0 <= idx < len(headlines)):
+            continue
+
+        relevant = item.get("relevant", True)
+        if not relevant:
+            continue
+
         raw_sentiment = item.get("sentiment", "neutral").lower()
         sentiment_type = _SENTIMENT_MAP.get(raw_sentiment, SentimentType.NEUTRAL)
 
@@ -83,8 +105,10 @@ async def analyze_sentiment(
         else:
             neutral += 1
 
-        if isinstance(idx, int) and 0 <= idx < len(updated):
-            updated[idx] = updated[idx].model_copy(update={"sentiment": sentiment_type})
+        updated_map[idx] = headlines[idx].model_copy(update={"sentiment": sentiment_type})
+
+    # Return relevant articles in original order
+    relevant_headlines = [updated_map[i] for i in sorted(updated_map)]
 
     overall_raw = data.get("overall", "neutral").lower()
     overall = _SENTIMENT_MAP.get(overall_raw, SentimentType.NEUTRAL)
@@ -100,4 +124,4 @@ async def analyze_sentiment(
         negative_count=negative,
         neutral_count=neutral,
     )
-    return analysis, updated
+    return analysis, relevant_headlines

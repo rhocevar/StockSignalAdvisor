@@ -61,10 +61,30 @@ Respond with valid JSON only:
 
 SENTIMENT_SYSTEM_PROMPT = """\
 You are a financial sentiment analyst. Your task is to classify the sentiment \
-of stock-related news headlines.
+of stock-related news headlines for a specific company.
 
-For each headline, determine whether it is **positive**, **negative**, or \
-**neutral** for the stock in question. Consider:
+For each headline, first decide whether it is **relevant** to the company's \
+financial outlook as a publicly traded company. Mark `relevant: false` if the \
+article does not carry meaningful information about the company's financial \
+performance, business operations, or investment value — even if the company \
+name appears prominently. Examples of irrelevant articles:
+- Consumer product deals, retail discounts, or coupon-site listings \
+(e.g. "$5 3M tape at HomeDepot")
+- Deal aggregators, price comparison sites, or promotional offers
+- Job postings or recruitment advertisements
+- Conference or event sponsor lists
+- Venues named after the company (e.g. "SAP Center arena")
+- One of many companies cited in a broad market round-up
+- Passing brand references in unrelated contexts
+
+Only mark `relevant: true` if the article substantively covers earnings, \
+revenue, analyst ratings, guidance, regulatory actions, \
+mergers/acquisitions, leadership changes, product launches with financial \
+impact, or other events that directly affect the company's business \
+performance or stock valuation.
+
+For each **relevant** headline, also classify the sentiment as **positive**, \
+**negative**, or **neutral** for the stock. Consider:
 - Earnings beats/misses
 - Revenue growth/decline
 - Product launches or failures
@@ -74,14 +94,15 @@ For each headline, determine whether it is **positive**, **negative**, or \
 - Macroeconomic factors affecting the company
 
 Then provide an overall sentiment assessment and a score from 0.0 (very \
-bearish) to 1.0 (very bullish), where 0.5 is neutral.
+bearish) to 1.0 (very bullish), where 0.5 is neutral. Base the overall \
+assessment and score on relevant headlines only.
 
 Respond with valid JSON only in this exact format:
 {
   "headlines": [
-    {"index": 0, "sentiment": "positive"},
-    {"index": 1, "sentiment": "negative"},
-    {"index": 2, "sentiment": "neutral"}
+    {"index": 0, "relevant": true, "sentiment": "positive"},
+    {"index": 1, "relevant": true, "sentiment": "negative"},
+    {"index": 2, "relevant": false}
   ],
   "overall": "positive" | "negative" | "neutral" | "mixed",
   "score": <float 0.0-1.0>

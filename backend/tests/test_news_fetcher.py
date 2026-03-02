@@ -5,6 +5,7 @@ import pytest
 
 from app.agents.tools.news_fetcher import (
     _NEWSAPI_FIELD_MAP,
+    _build_news_query,
     _is_english_headline,
     fetch_news_headlines,
     format_headlines,
@@ -68,6 +69,66 @@ class TestFieldMapping:
     def test_mapping_has_no_duplicate_model_fields(self):
         field_names = [field_name for _, field_name in _NEWSAPI_FIELD_MAP]
         assert len(field_names) == len(set(field_names))
+
+
+# ---- _build_news_query Tests ----
+
+class TestBuildNewsQuery:
+    def test_no_company_name_returns_ticker(self):
+        assert _build_news_query("AAPL", None) == "AAPL"
+
+    def test_with_company_name_returns_brand_name(self):
+        # When a brand name is available, use it alone — the ticker is NOT included.
+        # This prevents ticker-as-noise contamination (e.g. PBR → Unity/3D-graphics articles).
+        assert _build_news_query("AAPL", "Apple Inc.") == '"Apple"'
+
+    def test_strips_legal_suffixes(self):
+        assert _build_news_query("MSFT", "Microsoft Corporation") == '"Microsoft"'
+        assert _build_news_query("NVDA", "NVIDIA Corporation") == '"NVIDIA"'
+        assert _build_news_query("TSLA", "Tesla, Inc.") == '"Tesla"'
+
+    def test_extracts_brand_name_after_dash(self):
+        # The canonical PBR bug: bare "PBR" matches Unity game-dev articles.
+        # Using just "Petrobras" eliminates all non-finance noise.
+        result = _build_news_query("PBR", "Petróleo Brasileiro S.A. - Petrobras")
+        assert result == '"Petrobras"'
+
+    def test_company_name_same_as_ticker_returns_ticker(self):
+        # When brand name equals the ticker, fall back to plain ticker (no quotes needed).
+        assert _build_news_query("XYZ", "XYZ") == "XYZ"
+
+    def test_empty_company_name_returns_ticker(self):
+        assert _build_news_query("AAPL", "") == "AAPL"
+
+    def test_strips_company_suffix(self):
+        assert _build_news_query("MMM", "3M Company") == '"3M"'
+
+    def test_strips_leading_the_and_company(self):
+        # "The Walt Disney Company" → strip "The " → strip "Company" → "Walt Disney"
+        assert _build_news_query("DIS", "The Walt Disney Company") == '"Walt Disney"'
+
+    def test_strips_leading_the_with_inc(self):
+        assert _build_news_query("HD", "The Home Depot, Inc.") == '"Home Depot"'
+
+    def test_strips_european_ag_long_form(self):
+        # Bayer's yfinance longName uses the full German legal form
+        assert _build_news_query("BAYRY", "Bayer Aktiengesellschaft") == '"Bayer"'
+
+    def test_strips_european_se_suffix(self):
+        assert _build_news_query("BNTX", "BioNTech SE") == '"BioNTech"'
+
+    def test_european_se_same_as_ticker_returns_ticker(self):
+        # "SAP SE" → strip SE → "SAP" == ticker → fall back to plain ticker
+        assert _build_news_query("SAP", "SAP SE") == "SAP"
+
+    def test_strips_nordic_as_suffix(self):
+        assert _build_news_query("NVO", "Novo Nordisk A/S") == '"Novo Nordisk"'
+
+    def test_strips_parenthetical_adr(self):
+        assert _build_news_query("HDB", "HDFC Bank Limited (ADR)") == '"HDFC Bank"'
+
+    def test_strips_holdings_suffix(self):
+        assert _build_news_query("PYPL", "PayPal Holdings, Inc.") == '"PayPal"'
 
 
 # ---- _is_english_headline Tests ----
@@ -205,7 +266,9 @@ class TestFetchNewsHeadlines:
 
     @patch("app.agents.tools.news_fetcher.settings")
     @patch("app.agents.tools.news_fetcher.requests.get")
-    def test_passes_search_in_title_description(self, mock_get, mock_settings, mock_newsapi_response):
+    def test_searches_title_only(self, mock_get, mock_settings, mock_newsapi_response):
+        # Title-only ensures we fetch articles *about* the company, not ones that
+        # mention it in passing (sponsor lists, footnotes, package descriptions).
         mock_settings.NEWS_API_KEY = "test-key"
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -215,7 +278,49 @@ class TestFetchNewsHeadlines:
         fetch_news_headlines("AAPL")
 
         call_params = mock_get.call_args[1]["params"]
-        assert call_params["searchIn"] == "title,description"
+        assert call_params["searchIn"] == "title"
+
+    @patch("app.agents.tools.news_fetcher.settings")
+    @patch("app.agents.tools.news_fetcher.requests.get")
+    def test_excludes_pypi_domain(self, mock_get, mock_settings, mock_newsapi_response):
+        mock_settings.NEWS_API_KEY = "test-key"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = mock_newsapi_response
+        mock_get.return_value = mock_response
+
+        fetch_news_headlines("AAPL")
+
+        call_params = mock_get.call_args[1]["params"]
+        assert "pypi.org" in call_params["excludeDomains"]
+
+    @patch("app.agents.tools.news_fetcher.settings")
+    @patch("app.agents.tools.news_fetcher.requests.get")
+    def test_uses_company_name_in_query_when_provided(self, mock_get, mock_settings, mock_newsapi_response):
+        mock_settings.NEWS_API_KEY = "test-key"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = mock_newsapi_response
+        mock_get.return_value = mock_response
+
+        fetch_news_headlines("PBR", "Petróleo Brasileiro S.A. - Petrobras")
+
+        call_params = mock_get.call_args[1]["params"]
+        assert call_params["q"] == '"Petrobras"'
+
+    @patch("app.agents.tools.news_fetcher.settings")
+    @patch("app.agents.tools.news_fetcher.requests.get")
+    def test_uses_ticker_only_when_no_company_name(self, mock_get, mock_settings, mock_newsapi_response):
+        mock_settings.NEWS_API_KEY = "test-key"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = mock_newsapi_response
+        mock_get.return_value = mock_response
+
+        fetch_news_headlines("AAPL")
+
+        call_params = mock_get.call_args[1]["params"]
+        assert call_params["q"] == "AAPL"
 
     @patch("app.agents.tools.news_fetcher.settings")
     @patch("app.agents.tools.news_fetcher.requests.get")

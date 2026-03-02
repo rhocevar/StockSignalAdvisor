@@ -93,13 +93,15 @@ class StockAnalysisOrchestrator:
         await asyncio.to_thread(lambda: stock.info)
 
         # 3. Parallel data gathering
+        # company_name is a pure dict lookup on pre-fetched stock.info — no I/O needed.
+        # Resolve it synchronously so it can be passed to the news query for disambiguation
+        # (e.g. ticker "PBR" → query '"PBR" OR "Petrobras"' instead of just "PBR").
+        company_name: str | None = get_company_name(stock)
+
         tasks: dict[str, asyncio.Task] = {}
 
         tasks["price"] = asyncio.create_task(
             asyncio.to_thread(get_stock_price, stock)
-        )
-        tasks["company_name"] = asyncio.create_task(
-            asyncio.to_thread(get_company_name, stock)
         )
 
         if request.include_technicals:
@@ -114,7 +116,7 @@ class StockAnalysisOrchestrator:
 
         if request.include_news:
             tasks["news"] = asyncio.create_task(
-                asyncio.to_thread(fetch_news_headlines, ticker)
+                asyncio.to_thread(fetch_news_headlines, ticker, company_name)
             )
 
         # Await all tasks, catching errors gracefully
@@ -131,7 +133,6 @@ class StockAnalysisOrchestrator:
                 results[key] = None
 
         price_data: PriceData | None = results.get("price")
-        company_name: str | None = results.get("company_name")
         technicals: TechnicalAnalysis | None = results.get("technicals")
         fundamentals: FundamentalAnalysis | None = results.get("fundamentals")
         headlines: list[NewsSource] | None = results.get("news")
@@ -145,7 +146,9 @@ class StockAnalysisOrchestrator:
         sentiment: SentimentAnalysis | None = None
         if headlines:
             try:
-                sentiment, headlines = await analyze_sentiment(headlines)
+                sentiment, headlines = await analyze_sentiment(
+                    headlines, ticker=ticker, company_name=company_name
+                )
             except Exception:
                 logger.exception("Failed to analyze sentiment for %s", ticker)
 
