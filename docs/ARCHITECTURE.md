@@ -77,8 +77,9 @@ The LangChain agent's own signal (STRONG_BUY/BUY/HOLD/SELL/STRONG_SELL) determin
 - Analyst consensus (target vs current price, rating)
 
 **Sentiment score** (`agents/tools/sentiment.py`):
-- LLM classifies each headline as POSITIVE / NEGATIVE / NEUTRAL
-- Score = positive_count / total_count (with NEUTRAL counted at 0.5)
+- LLM classifies each headline for **relevance** and (if relevant) sentiment: POSITIVE / NEGATIVE / NEUTRAL
+- Irrelevant articles (deals, sponsor lists, venue names, etc.) are excluded from counts and the UI `sources` list
+- Score (0.0–1.0) is provided directly by the LLM based on relevant headlines only
 
 ---
 
@@ -202,7 +203,9 @@ All tool functions accept a `yf.Ticker` object (created once per request by `get
 
 Used for: recent news headlines for the sentiment pillar and `sources` list in the response.
 
-Headlines are fetched by ticker + company name query. Up to 10 articles are retrieved and passed to the LLM for classification.
+Headlines are fetched using a brand-name query built from the company name (legal suffixes stripped, parentheticals removed, leading "The " stripped). The ticker is only used as a fallback when no distinct brand name can be extracted. Using the brand name alone (not `"TICKER" OR "Brand"`) prevents contamination from tickers that are also common abbreviations in unrelated fields (e.g. PBR = Physically Based Rendering in Unity).
+
+Additional query constraints: `searchIn=title` (article must name the company in the headline, not just in passing) and `excludeDomains=pypi.org` (suppresses PyPI package release noise). Up to 10 articles are retrieved and passed to the LLM for relevance classification and sentiment scoring.
 
 ---
 
@@ -263,6 +266,8 @@ GitHub Actions (ci.yml)
         └── App Runner auto-detects new image → rolling deploy
               └── smoke-test job: poll describe-service until RUNNING
                     └── curl /api/v1/health → assert 200
+
+  backend job runs 282+ tests (fully mocked — no API keys required)
 
 Amplify:
   GitHub push → Amplify webhook → npm ci + npm run build → SSR deploy
