@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Clock } from "lucide-react";
+import { Clock, LoaderCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "ssa_recent";
 const MAX_RECENT = 5;
@@ -23,6 +24,8 @@ export function saveRecentTicker(ticker: string): void {
 export function RecentSearches() {
   const [mounted, setMounted] = useState(false);
   const [recents, setRecents] = useState<string[]>([]);
+  const [loadingTicker, setLoadingTicker] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   useEffect(() => {
@@ -35,19 +38,41 @@ export function RecentSearches() {
 
   if (!mounted || recents.length === 0) return null;
 
+  function handleClick(ticker: string) {
+    if (isPending) return;
+    setLoadingTicker(ticker);
+    startTransition(() => {
+      router.push(`/analyze/${ticker}`);
+    });
+  }
+
   return (
     <div className="flex items-center gap-2 flex-wrap justify-center mt-3">
       <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-      {recents.map((ticker) => (
-        <Badge
-          key={ticker}
-          variant="outline"
-          className="cursor-pointer font-mono hover:bg-accent transition-colors"
-          onClick={() => router.push(`/analyze/${ticker}`)}
-        >
-          {ticker}
-        </Badge>
-      ))}
+      {recents.map((ticker) => {
+        const isLoading = isPending && loadingTicker === ticker;
+        return (
+          <Badge
+            key={ticker}
+            variant="outline"
+            className={cn(
+              "font-mono transition-colors min-w-[3rem] justify-center",
+              isPending
+                ? isLoading
+                  ? "cursor-default"
+                  : "opacity-40 cursor-default"
+                : "cursor-pointer hover:bg-accent"
+            )}
+            onClick={() => handleClick(ticker)}
+          >
+            {isLoading ? (
+              <LoaderCircle className="h-3 w-3 animate-spin" />
+            ) : (
+              ticker
+            )}
+          </Badge>
+        );
+      })}
     </div>
   );
 }
