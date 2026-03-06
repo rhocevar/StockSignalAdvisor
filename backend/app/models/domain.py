@@ -91,6 +91,9 @@ class AnalysisResult(BaseModel):
 
 class PricePoint(BaseModel):
     date: str   # ISO format: "2025-01-15"
+    open: float
+    high: float
+    low: float
     close: float
 
 

@@ -50,8 +50,20 @@ def get_stock_price(stock: yf.Ticker) -> PriceData:
     price_history: list[PricePoint] | None = None
     if not history.empty:
         points = [
-            PricePoint(date=d.strftime("%Y-%m-%d"), close=round(float(c), 4))
-            for d, c in zip(history.index, history["Close"])
+            PricePoint(
+                date=d.strftime("%Y-%m-%d"),
+                open=round(float(o), 4),
+                high=round(float(h), 4),
+                low=round(float(l), 4),
+                close=round(float(c), 4),
+            )
+            for d, o, h, l, c in zip(
+                history.index,
+                history["Open"],
+                history["High"],
+                history["Low"],
+                history["Close"],
+            )
             if pd.notna(c)
         ]
         price_history = points if points else None

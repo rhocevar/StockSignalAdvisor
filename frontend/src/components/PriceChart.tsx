@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  LineChart,
-  Line,
+  ComposedChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -38,8 +38,55 @@ function formatPrice(value: number): string {
   }).format(value);
 }
 
+// Custom candlestick shape rendered inside a Bar whose dataKey spans [low, high].
+// Recharts sets y = pixel top (= high) and y+height = pixel bottom (= low),
+// so we can project open/close into that coordinate space to draw the body.
+function CandlestickShape(props: {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  payload?: PricePoint;
+}) {
+  const { x = 0, y = 0, width = 0, height = 0, payload } = props;
+  if (!payload || height <= 0) return null;
+
+  const { open, close, high, low } = payload;
+  const range = high - low;
+  if (range === 0) return null;
+
+  const isUp = close >= open;
+  const color = isUp ? "#22c55e" : "#ef4444";
+  const centerX = x + width / 2;
+
+  // Map a data value to a pixel Y within the bar's bounding box
+  const toPixelY = (v: number) => y + ((high - v) / range) * height;
+
+  const openY = toPixelY(open);
+  const closeY = toPixelY(close);
+  const bodyTop = Math.min(openY, closeY);
+  const bodyHeight = Math.max(1, Math.abs(openY - closeY));
+  const bodyWidth = Math.max(2, width * 0.7);
+
+  return (
+    <g>
+      {/* Full wick: high to low */}
+      <line x1={centerX} y1={y} x2={centerX} y2={y + height} stroke={color} strokeWidth={1} />
+      {/* Candle body: open to close */}
+      <rect
+        x={centerX - bodyWidth / 2}
+        y={bodyTop}
+        width={bodyWidth}
+        height={bodyHeight}
+        fill={color}
+        stroke={color}
+        strokeWidth={0.5}
+      />
+    </g>
+  );
+}
+
 interface TooltipPayload {
-  value: number;
   payload: PricePoint;
 }
 
@@ -50,11 +97,20 @@ interface CustomTooltipProps {
 
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
-  const { value, payload: point } = payload[0];
+  const point = payload[0].payload;
+  const isUp = point.close >= point.open;
   return (
     <div className="rounded-lg border bg-background shadow-md px-3 py-2 text-sm">
-      <p className="text-muted-foreground">{formatTooltipDate(point.date)}</p>
-      <p className="font-semibold">{formatPrice(value)}</p>
+      <p className="text-muted-foreground mb-1">{formatTooltipDate(point.date)}</p>
+      <div className="grid grid-cols-2 gap-x-3 text-xs">
+        <span className="text-muted-foreground">O</span><span>{formatPrice(point.open)}</span>
+        <span className="text-muted-foreground">H</span><span>{formatPrice(point.high)}</span>
+        <span className="text-muted-foreground">L</span><span>{formatPrice(point.low)}</span>
+        <span className="text-muted-foreground">C</span>
+        <span className={`font-semibold ${isUp ? "text-green-500" : "text-red-500"}`}>
+          {formatPrice(point.close)}
+        </span>
+      </div>
     </div>
   );
 }
@@ -65,13 +121,14 @@ export function PriceChart({ history }: PriceChartProps) {
   // Show every ~5th label to avoid crowding
   const tickInterval = Math.max(1, Math.floor(history.length / 5));
 
-  // Compute y-axis domain with a small padding
-  const closes = history.map((p) => p.close);
-  const minClose = Math.min(...closes);
-  const maxClose = Math.max(...closes);
-  const padding = (maxClose - minClose) * 0.05 || 1;
-  const yMin = Math.floor(minClose - padding);
-  const yMax = Math.ceil(maxClose + padding);
+  // Y-axis domain spans full high/low range with small padding
+  const allHighs = history.map((p) => p.high);
+  const allLows = history.map((p) => p.low);
+  const rangeHigh = Math.max(...allHighs);
+  const rangeLow = Math.min(...allLows);
+  const padding = (rangeHigh - rangeLow) * 0.05 || 1;
+  const yMin = Math.floor(rangeLow - padding);
+  const yMax = Math.ceil(rangeHigh + padding);
 
   return (
     <Card>
@@ -80,7 +137,7 @@ export function PriceChart({ history }: PriceChartProps) {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={200}>
-          <LineChart
+          <ComposedChart
             data={history}
             margin={{ top: 4, right: 8, bottom: 0, left: 8 }}
           >
@@ -100,16 +157,18 @@ export function PriceChart({ history }: PriceChartProps) {
               axisLine={false}
               width={48}
             />
-            <Tooltip content={<CustomTooltip />} />
-            <Line
-              type="monotone"
-              dataKey="close"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }}
             />
-          </LineChart>
+            <Bar
+              dataKey={(d: PricePoint) => [d.low, d.high]}
+              shape={(props: object) => (
+                <CandlestickShape {...(props as Parameters<typeof CandlestickShape>[0])} />
+              )}
+              isAnimationActive={false}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

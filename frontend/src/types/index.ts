@@ -75,6 +75,9 @@ export interface AnalysisResult {
 
 export interface PricePoint {
   date: string;
+  open: number;
+  high: number;
+  low: number;
   close: number;
 }
 

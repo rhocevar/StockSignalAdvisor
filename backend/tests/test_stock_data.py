@@ -67,6 +67,9 @@ class TestGetStockPrice:
         assert result.price_history is not None
         assert len(result.price_history) == 30
         assert isinstance(result.price_history[0], PricePoint)
+        assert result.price_history[0].open == 140.0
+        assert result.price_history[0].high == 142.0
+        assert result.price_history[0].low == 138.0
         assert result.price_history[0].close == 141.0
 
     def test_calculates_change_percentages(self, mock_ticker):
