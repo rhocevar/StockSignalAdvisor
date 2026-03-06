@@ -2,6 +2,11 @@ import type { AnalyzeRequest, AnalyzeResponse } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export type SseEvent = {
+  type: string;
+  data: unknown;
+};
+
 export class ApiError extends Error {
   readonly status: number;
   constructor(message: string, status: number) {
@@ -51,4 +56,46 @@ export async function analyzeStock(
   }
 
   return res.json();
+}
+
+export async function streamAnalysis(
+  ticker: string,
+  onEvent: (event: SseEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/v1/signal/stream?ticker=${encodeURIComponent(ticker)}`,
+    { headers: { Accept: "text/event-stream" }, signal },
+  );
+
+  if (!res.ok || !res.body) {
+    throw new ApiError("Stream request failed", res.status);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() ?? "";
+      for (const part of parts) {
+        for (const line of part.split("\n")) {
+          if (line.startsWith("data: ")) {
+            try {
+              onEvent(JSON.parse(line.slice(6)) as SseEvent);
+            } catch {
+              // ignore malformed JSON lines
+            }
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }

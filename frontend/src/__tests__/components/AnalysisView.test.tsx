@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AnalysisView } from "@/components/AnalysisView";
-import { useAnalysis } from "@/hooks/useAnalysis";
+import { useStreamingAnalysis } from "@/hooks/useStreamingAnalysis";
 import type { AnalyzeResponse } from "@/types";
 
-jest.mock("../../hooks/useAnalysis");
+jest.mock("../../hooks/useStreamingAnalysis");
 
-const mockRefetch = jest.fn();
-const mockUseAnalysis = useAnalysis as jest.Mock;
+const mockRestart = jest.fn();
+const mockUseStreamingAnalysis = useStreamingAnalysis as jest.Mock;
 
 const mockData: AnalyzeResponse = {
   ticker: "AAPL",
@@ -38,64 +38,79 @@ const mockData: AnalyzeResponse = {
 
 describe("AnalysisView", () => {
   beforeEach(() => {
-    mockRefetch.mockClear();
-    mockUseAnalysis.mockReturnValue({
-      refetch: mockRefetch,
-      isPending: false,
-      data: undefined,
+    mockRestart.mockClear();
+    mockUseStreamingAnalysis.mockReturnValue({
+      technical: null,
+      fundamental: null,
+      sentimentData: null,
+      result: null,
+      isStreaming: false,
       error: null,
+      restart: mockRestart,
     });
   });
 
-  it("shows LoadingState when isPending is true", () => {
-    mockUseAnalysis.mockReturnValue({
-      refetch: mockRefetch,
-      isPending: true,
-      data: undefined,
+  it("shows LoadingState when isStreaming is true and no data has arrived", () => {
+    mockUseStreamingAnalysis.mockReturnValue({
+      technical: null,
+      fundamental: null,
+      sentimentData: null,
+      result: null,
+      isStreaming: true,
       error: null,
+      restart: mockRestart,
     });
     render(<AnalysisView ticker="AAPL" />);
     expect(screen.getByText(/AI analysis typically takes/i)).toBeInTheDocument();
   });
 
   it("shows error panel when error is set", () => {
-    mockUseAnalysis.mockReturnValue({
-      refetch: mockRefetch,
-      isPending: false,
-      data: undefined,
-      error: new Error('Ticker "XYZINVALID" not found.'),
+    mockUseStreamingAnalysis.mockReturnValue({
+      technical: null,
+      fundamental: null,
+      sentimentData: null,
+      result: null,
+      isStreaming: false,
+      error: 'Ticker "XYZINVALID" not found.',
+      restart: mockRestart,
     });
     render(<AnalysisView ticker="XYZINVALID" />);
     expect(screen.getByText(/Analysis failed/i)).toBeInTheDocument();
     expect(screen.getByText(/not found/i)).toBeInTheDocument();
   });
 
-  it("shows Try Again button in error state that calls refetch", async () => {
+  it("shows Try Again button in error state that calls restart", async () => {
     const user = userEvent.setup();
-    mockUseAnalysis.mockReturnValue({
-      refetch: mockRefetch,
-      isPending: false,
-      data: undefined,
-      error: new Error("Something went wrong"),
+    mockUseStreamingAnalysis.mockReturnValue({
+      technical: null,
+      fundamental: null,
+      sentimentData: null,
+      result: null,
+      isStreaming: false,
+      error: "Something went wrong",
+      restart: mockRestart,
     });
     render(<AnalysisView ticker="AAPL" />);
     await user.click(screen.getByRole("button", { name: /try again/i }));
-    expect(mockRefetch).toHaveBeenCalled();
+    expect(mockRestart).toHaveBeenCalled();
   });
 
-  it("renders nothing when not pending and no data or error", () => {
+  it("renders nothing when not streaming and no data or error", () => {
     render(<AnalysisView ticker="AAPL" />);
     expect(screen.queryByText(/AI analysis typically takes/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Analysis failed/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("renders signal card when analysis data is present", () => {
-    mockUseAnalysis.mockReturnValue({
-      refetch: mockRefetch,
-      isPending: false,
-      data: mockData,
+  it("renders signal card when result is present", () => {
+    mockUseStreamingAnalysis.mockReturnValue({
+      technical: null,
+      fundamental: null,
+      sentimentData: null,
+      result: mockData,
+      isStreaming: false,
       error: null,
+      restart: mockRestart,
     });
     render(<AnalysisView ticker="AAPL" />);
     expect(screen.getByText("AAPL")).toBeInTheDocument();

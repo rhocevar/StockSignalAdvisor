@@ -1,5 +1,6 @@
 """Tests for API route endpoints."""
 
+import json
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -7,6 +8,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
+from app.agents.orchestrator import StreamEvent
 from app.enums import MacdSignal, SentimentType, SignalType, TrendDirection, VolumeTrend
 from app.main import app
 from app.providers.llm.base import LLMRateLimitError
@@ -237,6 +239,78 @@ class TestAnalyzeRateLimiting:
         response = client.post("/api/v1/signal", json={"ticker": "AAPL"})
         assert response.status_code == 200
         mock_rate_limit.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Streaming analysis endpoint
+# ---------------------------------------------------------------------------
+
+
+def _parse_sse_events(text: str) -> list[dict]:
+    """Extract and parse JSON payloads from SSE `data:` lines."""
+    return [
+        json.loads(line[6:])
+        for line in text.splitlines()
+        if line.startswith("data: ")
+    ]
+
+
+class TestStreamSignalEndpoint:
+    def test_stream_returns_200(self):
+        async def gen():
+            yield StreamEvent(type="complete", data=_SAMPLE_ANALYZE_RESPONSE.model_dump(mode="json"))
+
+        with patch(
+            "app.api.routes.analysis._orchestrator.analyze_streaming",
+            side_effect=lambda t: gen(),
+        ):
+            response = client.get("/api/v1/signal/stream", params={"ticker": "AAPL"})
+        assert response.status_code == 200
+
+    def test_stream_content_type(self):
+        async def gen():
+            yield StreamEvent(type="complete", data=_SAMPLE_ANALYZE_RESPONSE.model_dump(mode="json"))
+
+        with patch(
+            "app.api.routes.analysis._orchestrator.analyze_streaming",
+            side_effect=lambda t: gen(),
+        ):
+            response = client.get("/api/v1/signal/stream", params={"ticker": "AAPL"})
+        assert "text/event-stream" in response.headers["content-type"]
+
+    def test_stream_final_event_is_complete(self):
+        async def gen():
+            yield StreamEvent(type="technical", data={"technical_score": 0.7})
+            yield StreamEvent(type="complete", data=_SAMPLE_ANALYZE_RESPONSE.model_dump(mode="json"))
+
+        with patch(
+            "app.api.routes.analysis._orchestrator.analyze_streaming",
+            side_effect=lambda t: gen(),
+        ):
+            response = client.get("/api/v1/signal/stream", params={"ticker": "AAPL"})
+
+        events = _parse_sse_events(response.text)
+        assert len(events) == 2
+        last = events[-1]
+        assert last["type"] == "complete"
+        assert last["data"]["ticker"] == "AAPL"
+
+    def test_stream_error_event_on_orchestrator_failure(self):
+        async def gen_error():
+            raise RuntimeError("orchestrator crashed")
+            yield  # make this an async generator
+
+        with patch(
+            "app.api.routes.analysis._orchestrator.analyze_streaming",
+            side_effect=lambda t: gen_error(),
+        ):
+            response = client.get("/api/v1/signal/stream", params={"ticker": "AAPL"})
+
+        assert response.status_code == 200
+        events = _parse_sse_events(response.text)
+        assert len(events) == 1
+        assert events[0]["type"] == "error"
+        assert events[0]["data"]["code"] == 502
 
 
 # ---------------------------------------------------------------------------

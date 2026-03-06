@@ -152,6 +152,50 @@ curl -X POST https://xdvpqzqg4m.us-east-2.awsapprunner.com/api/v1/signal \
 
 ---
 
+### `GET /api/v1/signal/stream`
+
+Streams analysis results as **Server-Sent Events** (SSE). The connection opens immediately with `200 OK` and stays open while the backend processes the ticker. Each analysis pillar emits an event as soon as it completes, so the frontend can render data progressively instead of waiting for the full response.
+
+**Query parameter:** `ticker` — stock symbol (1–10 alphanumeric chars)
+
+**Response headers**
+```
+Content-Type: text/event-stream
+Cache-Control: no-cache
+X-Accel-Buffering: no
+```
+
+**Event schema**
+
+All events are JSON-encoded `data:` lines:
+
+```
+data: {"type": "technical",   "data": { ...TechnicalAnalysis fields... }}\n\n
+data: {"type": "fundamental", "data": { ...FundamentalAnalysis fields... }}\n\n
+data: {"type": "sentiment",   "data": { "analysis": {...}, "sources": [...] }}\n\n
+data: {"type": "complete",    "data": { ...full AnalyzeResponse... }}\n\n
+data: {"type": "error",       "data": { "code": 404|502, "message": "..." }}\n\n
+```
+
+| Event type | When emitted | Data |
+|-----------|-------------|------|
+| `technical` | After RSI/MACD/SMA calculation (~1–3 s) | `TechnicalAnalysis` object |
+| `fundamental` | After fundamentals fetch (~1–3 s, order varies) | `FundamentalAnalysis` object |
+| `sentiment` | After news fetch + LLM classification (~4–8 s) | `{ analysis: SentimentAnalysis, sources: NewsSource[] }` |
+| `complete` | After agent generates signal (~8–15 s) | Full `AnalyzeResponse` object |
+| `error` | On ticker-not-found or service failure | `{ code: number, message: string }` |
+
+For **cached tickers** a single `complete` event is emitted immediately and the stream closes.
+
+**Note:** HTTP headers are committed when the connection opens, so errors cannot change the HTTP status code — they are always delivered as `error` events within the stream.
+
+**Example**
+```bash
+curl -N "http://localhost:8000/api/v1/signal/stream?ticker=AAPL"
+```
+
+---
+
 ## Tools
 
 Individual tool endpoints are provided for debugging and exploration. They expose the same data-gathering functions used internally by the analysis pipeline.

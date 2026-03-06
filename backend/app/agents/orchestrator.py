@@ -2,7 +2,10 @@
 
 import asyncio
 import logging
+from collections.abc import AsyncGenerator
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any, Callable
 
 import yfinance as yf
 
@@ -35,6 +38,42 @@ _WEIGHTS_ALL = {"technical": 0.40, "fundamental": 0.40, "sentiment": 0.20}
 _WEIGHTS_NO_FUNDAMENTAL = {"technical": 0.70, "sentiment": 0.30}
 _WEIGHTS_NO_SENTIMENT = {"technical": 0.60, "fundamental": 0.40}
 _WEIGHTS_TECHNICAL_ONLY = {"technical": 1.00}
+
+
+# ---------------------------------------------------------------------------
+# Streaming types
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class PillarResult:
+    """Pairs a pillar label with its computed data (or None on failure)."""
+
+    pillar: str
+    data: TechnicalAnalysis | FundamentalAnalysis | None
+
+
+@dataclass
+class StreamEvent:
+    """A single SSE event produced by analyze_streaming()."""
+
+    type: str  # "technical" | "fundamental" | "sentiment" | "complete" | "error"
+    data: dict[str, Any]
+
+
+async def _pillar(label: str, fn: Callable, *args: Any) -> PillarResult:
+    """Run a synchronous pillar tool in a thread pool; swallow errors gracefully."""
+    try:
+        data = await asyncio.to_thread(fn, *args)
+    except Exception:
+        logger.exception("Failed to calculate %s pillar", label)
+        data = None
+    return PillarResult(pillar=label, data=data)
+
+
+# ---------------------------------------------------------------------------
+# Confidence calculation
+# ---------------------------------------------------------------------------
 
 
 def _compute_weighted_confidence(
@@ -73,6 +112,11 @@ def _compute_weighted_confidence(
     return round(max(0.0, min(1.0, score)), 4)
 
 
+# ---------------------------------------------------------------------------
+# Orchestrator
+# ---------------------------------------------------------------------------
+
+
 class StockAnalysisOrchestrator:
     """Coordinates all analysis tools and assembles the full AnalyzeResponse."""
 
@@ -95,7 +139,7 @@ class StockAnalysisOrchestrator:
         # 3. Parallel data gathering
         # company_name is a pure dict lookup on pre-fetched stock.info — no I/O needed.
         # Resolve it synchronously so it can be passed to the news query for disambiguation
-        # (e.g. ticker "PBR" → query '"PBR" OR "Petrobras"' instead of just "PBR").
+        # (e.g. ticker "PBR" → query '"Petrobras"' instead of just "PBR").
         company_name: str | None = get_company_name(stock)
 
         tasks: dict[str, asyncio.Task] = {}
@@ -193,3 +237,130 @@ class StockAnalysisOrchestrator:
         set_cached(ticker, response)
 
         return response
+
+    async def analyze_streaming(self, ticker: str) -> AsyncGenerator[StreamEvent, None]:
+        """Stream pillar results as SSE events as each completes.
+
+        Always runs the full analysis (all three pillars). Emits:
+        - ``technical`` and ``fundamental`` events in completion order
+        - ``sentiment`` event after news fetch + LLM classification
+        - ``complete`` event with the full AnalyzeResponse payload
+        - ``error`` event (code 404 or 429) on unrecoverable failures
+
+        For cached tickers a single ``complete`` event is emitted immediately.
+        """
+        ticker = ticker.upper()
+
+        # 1. Cache check — emit single complete event and close
+        cached = get_cached(ticker)
+        if cached is not None:
+            result = cached.model_copy(deep=True)
+            result.metadata.cached = True
+            yield StreamEvent(type="complete", data=result.model_dump(mode="json"))
+            return
+
+        # 2. Shared yf.Ticker setup (same race-condition guard as analyze())
+        stock = await asyncio.to_thread(get_ticker, ticker)
+        await asyncio.to_thread(lambda: stock.info)
+        company_name: str | None = get_company_name(stock)
+
+        # 3. Start all tasks in parallel before processing any results
+        price_task = asyncio.create_task(asyncio.to_thread(get_stock_price, stock))
+        news_task = asyncio.create_task(
+            asyncio.to_thread(fetch_news_headlines, ticker, company_name)
+        )
+        tech_task = asyncio.create_task(_pillar("technical", calculate_technicals, stock))
+        fund_task = asyncio.create_task(_pillar("fundamental", calculate_fundamentals, stock))
+
+        # 4. Emit technical / fundamental as each completes (order is non-deterministic)
+        pillar_results: dict[str, TechnicalAnalysis | FundamentalAnalysis | None] = {}
+        for fut in asyncio.as_completed([tech_task, fund_task]):
+            result: PillarResult = await fut  # _pillar() swallows exceptions internally
+            pillar_results[result.pillar] = result.data
+            if result.data is not None:
+                yield StreamEvent(type=result.pillar, data=result.data.model_dump(mode="json"))
+
+        # 5. Sentiment (depends on news headlines)
+        headlines: list[NewsSource] | None = None
+        try:
+            headlines = await news_task
+        except Exception:
+            logger.exception("Failed to fetch news for %s", ticker)
+
+        sentiment: SentimentAnalysis | None = None
+        if headlines:
+            try:
+                sentiment, headlines = await analyze_sentiment(
+                    headlines, ticker=ticker, company_name=company_name
+                )
+                yield StreamEvent(
+                    type="sentiment",
+                    data={
+                        "analysis": sentiment.model_dump(mode="json"),
+                        "sources": [s.model_dump(mode="json") for s in headlines],
+                    },
+                )
+            except Exception:
+                logger.exception("Failed to analyze sentiment for %s", ticker)
+
+        # 6. Price data (running in parallel since step 3; likely done by now)
+        price_data: PriceData | None = None
+        try:
+            price_data = await price_task
+        except Exception:
+            logger.exception("Failed to get price data for %s", ticker)
+
+        if price_data is None:
+            yield StreamEvent(
+                type="error",
+                data={
+                    "code": 404,
+                    "message": f"Ticker '{ticker}' not found or has no market data.",
+                },
+            )
+            return
+
+        # 7. Agent — signal + explanation
+        try:
+            agent_result = await run_agent(ticker)
+        except LLMRateLimitError:
+            yield StreamEvent(
+                type="error",
+                data={"code": 429, "message": "LLM rate limit exceeded. Please try again later."},
+            )
+            return
+        except Exception:
+            logger.exception("Agent failed for %s, using fallback HOLD signal", ticker)
+            agent_result = AgentResult(
+                explanation="Signal analysis temporarily unavailable. Technical and fundamental data are shown below."
+            )
+
+        # 8. Confidence + assemble full response
+        technicals: TechnicalAnalysis | None = pillar_results.get("technical")
+        fundamentals: FundamentalAnalysis | None = pillar_results.get("fundamental")
+        confidence = _compute_weighted_confidence(technicals, fundamentals, sentiment)
+
+        response = AnalyzeResponse(
+            ticker=ticker,
+            company_name=company_name,
+            signal=agent_result.signal,
+            confidence=confidence,
+            explanation=agent_result.explanation,
+            analysis=AnalysisResult(
+                technical=technicals,
+                fundamentals=fundamentals,
+                sentiment=sentiment,
+            ),
+            price_data=price_data,
+            sources=headlines or [],
+            metadata=AnalysisMetadata(
+                generated_at=datetime.now(timezone.utc),
+                llm_provider=settings.LLM_PROVIDER.value,
+                model_used=settings.LLM_MODEL or "not configured",
+                vectorstore_provider=settings.VECTORSTORE_PROVIDER.value,
+                cached=False,
+            ),
+        )
+
+        set_cached(ticker, response)
+        yield StreamEvent(type="complete", data=response.model_dump(mode="json"))

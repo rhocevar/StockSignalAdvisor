@@ -1,0 +1,38 @@
+meta {
+  name: Stream Signal (SSE)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/signal/stream?ticker=AAPL
+  body: none
+}
+
+headers {
+  Accept: text/event-stream
+  Cache-Control: no-cache
+}
+
+docs {
+  Streams analysis results as Server-Sent Events.
+
+  The connection stays open while the backend processes the ticker.
+  Events are emitted as each analysis pillar completes:
+
+    data: {"type": "technical",   "data": { ...TechnicalAnalysis... }}
+    data: {"type": "fundamental", "data": { ...FundamentalAnalysis... }}
+    data: {"type": "sentiment",   "data": { "analysis": {...}, "sources": [...] }}
+    data: {"type": "complete",    "data": { ...full AnalyzeResponse... }}
+
+  On error (invalid ticker, service failure, etc.) an error event is emitted:
+
+    data: {"type": "error", "data": { "code": 404|502, "message": "..." }}
+
+  Note: HTTP headers are committed on connection open, so errors cannot change
+  the status code — they are always delivered as error events within the stream.
+
+  Bruno displays the raw text/event-stream response body; use curl for live streaming:
+
+    curl -N "http://localhost:8000/api/v1/signal/stream?ticker=AAPL"
+}

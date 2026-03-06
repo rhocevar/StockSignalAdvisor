@@ -1,4 +1,4 @@
-import { analyzeStock, ApiError } from "@/lib/api";
+import { analyzeStock, streamAnalysis, ApiError } from "@/lib/api";
 import type { AnalyzeRequest, AnalyzeResponse } from "@/types";
 
 const mockRequest: AnalyzeRequest = { ticker: "AAPL" };
@@ -39,6 +39,75 @@ function mockFetch(status: number, body: unknown): jest.Mock {
   global.fetch = mock as unknown as typeof fetch;
   return mock;
 }
+
+function mockStreamFetch(body: string, status = 200): void {
+  const bytes = new Uint8Array(Buffer.from(body, "utf-8"));
+  let consumed = false;
+  const mockReader = {
+    read: jest.fn().mockImplementation(() => {
+      if (!consumed) {
+        consumed = true;
+        return Promise.resolve({ done: false, value: bytes });
+      }
+      return Promise.resolve({ done: true, value: undefined });
+    }),
+    releaseLock: jest.fn(),
+  };
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: status >= 200 && status < 300,
+    status,
+    body: { getReader: () => mockReader },
+  } as unknown as Response);
+}
+
+describe("streamAnalysis", () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("calls onEvent for each SSE data line", async () => {
+    const body =
+      'data: {"type":"technical","data":{"score":0.7}}\n\n' +
+      'data: {"type":"complete","data":{"ticker":"AAPL"}}\n\n';
+    mockStreamFetch(body);
+
+    const onEvent = jest.fn();
+    await streamAnalysis("AAPL", onEvent);
+
+    expect(onEvent).toHaveBeenCalledTimes(2);
+    expect(onEvent).toHaveBeenNthCalledWith(1, { type: "technical", data: { score: 0.7 } });
+    expect(onEvent).toHaveBeenNthCalledWith(2, { type: "complete", data: { ticker: "AAPL" } });
+  });
+
+  it("ignores non-data lines (comments and blanks)", async () => {
+    const body =
+      ": this is a comment\n\n" +
+      'data: {"type":"complete","data":{}}\n\n';
+    mockStreamFetch(body);
+
+    const onEvent = jest.fn();
+    await streamAnalysis("AAPL", onEvent);
+
+    expect(onEvent).toHaveBeenCalledTimes(1);
+    expect(onEvent).toHaveBeenCalledWith({ type: "complete", data: {} });
+  });
+
+  it("rejects with AbortError when signal is already aborted", async () => {
+    const abortError = Object.assign(new Error("The user aborted a request."), {
+      name: "AbortError",
+    });
+    global.fetch = jest.fn().mockRejectedValue(abortError) as unknown as typeof fetch;
+
+    const onEvent = jest.fn();
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(streamAnalysis("AAPL", onEvent, controller.signal)).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    expect(onEvent).not.toHaveBeenCalled();
+  });
+});
 
 describe("analyzeStock", () => {
   afterEach(() => {

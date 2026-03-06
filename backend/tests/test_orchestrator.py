@@ -15,7 +15,13 @@ from app.models.domain import (
     TechnicalAnalysis,
 )
 from app.models.request import AnalyzeRequest
-from app.agents.orchestrator import StockAnalysisOrchestrator, _compute_weighted_confidence
+from app.models.response import AnalyzeResponse
+from app.agents.orchestrator import (
+    PillarResult,
+    StockAnalysisOrchestrator,
+    StreamEvent,
+    _compute_weighted_confidence,
+)
 from app.services.cache import clear_cache
 
 
@@ -443,3 +449,152 @@ class TestOrchestratorAgentFallback:
             )
 
         assert result.signal == SignalType.HOLD
+
+
+# ---------------------------------------------------------------------------
+# analyze_streaming() tests
+# ---------------------------------------------------------------------------
+
+
+class TestAnalyzeStreaming:
+    """Tests for StockAnalysisOrchestrator.analyze_streaming()."""
+
+    @staticmethod
+    async def _collect(orchestrator: StockAnalysisOrchestrator, ticker: str) -> list[StreamEvent]:
+        events: list[StreamEvent] = []
+        async for event in orchestrator.analyze_streaming(ticker):
+            events.append(event)
+        return events
+
+    @pytest.mark.asyncio
+    async def test_cached_result_emits_single_complete_event(
+        self,
+        sample_price, sample_technicals, sample_fundamentals,
+        sample_headlines, sample_sentiment, sample_agent_result,
+    ):
+        """Cache hit → exactly one 'complete' event with cached=True."""
+        patches = _patch_all(
+            price=sample_price, technicals=sample_technicals,
+            fundamentals=sample_fundamentals, headlines=sample_headlines,
+            sentiment=sample_sentiment, agent_result=sample_agent_result,
+        )
+        orchestrator = StockAnalysisOrchestrator()
+
+        # Populate cache via analyze()
+        with patches["get_ticker"], patches["get_stock_price"], \
+             patches["get_company_name"], patches["calculate_technicals"], \
+             patches["calculate_fundamentals"], patches["fetch_news_headlines"], \
+             patches["analyze_sentiment"], patches["run_agent"]:
+            await orchestrator.analyze(AnalyzeRequest(ticker="AAPL"))
+
+        # Streaming call should return cached result without hitting any tools
+        events = await self._collect(orchestrator, "AAPL")
+
+        assert len(events) == 1
+        assert events[0].type == "complete"
+        assert events[0].data["metadata"]["cached"] is True
+
+    @pytest.mark.asyncio
+    async def test_emits_technical_event(
+        self,
+        sample_price, sample_technicals, sample_fundamentals,
+        sample_headlines, sample_sentiment, sample_agent_result,
+    ):
+        patches = _patch_all(
+            price=sample_price, technicals=sample_technicals,
+            fundamentals=sample_fundamentals, headlines=sample_headlines,
+            sentiment=sample_sentiment, agent_result=sample_agent_result,
+        )
+        with patches["get_ticker"], patches["get_stock_price"], \
+             patches["get_company_name"], patches["calculate_technicals"], \
+             patches["calculate_fundamentals"], patches["fetch_news_headlines"], \
+             patches["analyze_sentiment"], patches["run_agent"]:
+            orchestrator = StockAnalysisOrchestrator()
+            events = await self._collect(orchestrator, "AAPL")
+
+        assert any(e.type == "technical" for e in events)
+
+    @pytest.mark.asyncio
+    async def test_emits_fundamental_event(
+        self,
+        sample_price, sample_technicals, sample_fundamentals,
+        sample_headlines, sample_sentiment, sample_agent_result,
+    ):
+        patches = _patch_all(
+            price=sample_price, technicals=sample_technicals,
+            fundamentals=sample_fundamentals, headlines=sample_headlines,
+            sentiment=sample_sentiment, agent_result=sample_agent_result,
+        )
+        with patches["get_ticker"], patches["get_stock_price"], \
+             patches["get_company_name"], patches["calculate_technicals"], \
+             patches["calculate_fundamentals"], patches["fetch_news_headlines"], \
+             patches["analyze_sentiment"], patches["run_agent"]:
+            orchestrator = StockAnalysisOrchestrator()
+            events = await self._collect(orchestrator, "AAPL")
+
+        assert any(e.type == "fundamental" for e in events)
+
+    @pytest.mark.asyncio
+    async def test_emits_sentiment_event_with_analysis_and_sources(
+        self,
+        sample_price, sample_technicals, sample_fundamentals,
+        sample_headlines, sample_sentiment, sample_agent_result,
+    ):
+        patches = _patch_all(
+            price=sample_price, technicals=sample_technicals,
+            fundamentals=sample_fundamentals, headlines=sample_headlines,
+            sentiment=sample_sentiment, agent_result=sample_agent_result,
+        )
+        with patches["get_ticker"], patches["get_stock_price"], \
+             patches["get_company_name"], patches["calculate_technicals"], \
+             patches["calculate_fundamentals"], patches["fetch_news_headlines"], \
+             patches["analyze_sentiment"], patches["run_agent"]:
+            orchestrator = StockAnalysisOrchestrator()
+            events = await self._collect(orchestrator, "AAPL")
+
+        sentiment_events = [e for e in events if e.type == "sentiment"]
+        assert len(sentiment_events) == 1
+        assert "analysis" in sentiment_events[0].data
+        assert "sources" in sentiment_events[0].data
+
+    @pytest.mark.asyncio
+    async def test_complete_event_contains_full_response(
+        self,
+        sample_price, sample_technicals, sample_fundamentals,
+        sample_headlines, sample_sentiment, sample_agent_result,
+    ):
+        patches = _patch_all(
+            price=sample_price, technicals=sample_technicals,
+            fundamentals=sample_fundamentals, headlines=sample_headlines,
+            sentiment=sample_sentiment, agent_result=sample_agent_result,
+        )
+        with patches["get_ticker"], patches["get_stock_price"], \
+             patches["get_company_name"], patches["calculate_technicals"], \
+             patches["calculate_fundamentals"], patches["fetch_news_headlines"], \
+             patches["analyze_sentiment"], patches["run_agent"]:
+            orchestrator = StockAnalysisOrchestrator()
+            events = await self._collect(orchestrator, "AAPL")
+
+        complete = [e for e in events if e.type == "complete"]
+        assert len(complete) == 1
+        data = complete[0].data
+        assert data["ticker"] == "AAPL"
+        assert data["signal"] == SignalType.BUY.value
+        assert "confidence" in data
+        assert "analysis" in data
+
+    @pytest.mark.asyncio
+    async def test_invalid_ticker_emits_error_event(self):
+        """When price_data is None (invalid ticker), an error event is emitted."""
+        patches = _patch_all(price=None)
+
+        with patches["get_ticker"], patches["get_stock_price"], \
+             patches["get_company_name"], patches["calculate_technicals"], \
+             patches["calculate_fundamentals"], patches["fetch_news_headlines"], \
+             patches["analyze_sentiment"], patches["run_agent"]:
+            orchestrator = StockAnalysisOrchestrator()
+            events = await self._collect(orchestrator, "INVALID")
+
+        error_events = [e for e in events if e.type == "error"]
+        assert len(error_events) == 1
+        assert error_events[0].data["code"] == 404

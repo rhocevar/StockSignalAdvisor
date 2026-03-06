@@ -12,9 +12,9 @@
 │      https://stock-signal-advisor.rafaelhocevar.com      │
 │                                                         │
 │  / (home)           → TickerInput                       │
-│  /analyze/[ticker]  → AnalysisView (React Query)        │
+│  /analyze/[ticker]  → AnalysisView (SSE streaming)      │
 └────────────────────────┬────────────────────────────────┘
-                         │ POST /api/v1/signal
+                         │ GET /api/v1/signal/stream (SSE)
 ┌────────────────────────▼────────────────────────────────┐
 │           AWS App Runner (FastAPI + Docker)              │
 │        https://xdvpqzqg4m.us-east-2.awsapprunner.com   │
@@ -244,10 +244,51 @@ Additional query constraints: `searchIn=title` (article must name the company in
 
 ```
 User types ticker → TickerInput → router.push("/analyze/AAPL")
-Page loads → AnalysisView mounts → useAnalysis("AAPL") returns { isPending, data, error, refetch }
-React Query fires fetch POST /api/v1/signal → backend (deduplicated for same ticker)
-Response → React Query updates state → components re-render with data
+Page loads → AnalysisView mounts → useStreamingAnalysis("AAPL")
+  → streamAnalysis() opens GET /api/v1/signal/stream?ticker=AAPL (SSE connection)
+  → "technical" event  → TechnicalIndicators renders
+  → "fundamental" event → FundamentalsCard renders
+  → "sentiment" event  → SourcesList renders
+  → "complete" event   → SignalCard + explanation + metadata render; stream closes
 ```
+
+---
+
+## Streaming Architecture
+
+Analysis results are delivered as **Server-Sent Events** (SSE) so the UI fills in progressively rather than waiting for a single monolithic response.
+
+### SSE Event Types
+
+| Type | Payload | When |
+|------|---------|------|
+| `technical` | `TechnicalAnalysis` | After RSI/MACD/SMA calculation |
+| `fundamental` | `FundamentalAnalysis` | After fundamentals fetch |
+| `sentiment` | `{ analysis, sources }` | After news fetch + LLM classification |
+| `complete` | Full `AnalyzeResponse` | After agent generates signal |
+| `error` | `{ code, message }` | On any failure |
+
+### Backend (`orchestrator.py`)
+
+Two dataclasses defined at module level:
+
+```python
+@dataclass
+class PillarResult:
+    pillar: str                                      # "technical" | "fundamental"
+    data: TechnicalAnalysis | FundamentalAnalysis | None
+
+@dataclass
+class StreamEvent:
+    type: str                                        # event discriminator
+    data: dict[str, Any]                             # serialized payload
+```
+
+`analyze_streaming()` uses `asyncio.as_completed` over the two pillar tasks so events emit in natural completion order. `analyze()` is a thin wrapper that consumes the generator and returns the `complete` event's data as an `AnalyzeResponse`.
+
+### Frontend (`useStreamingAnalysis.ts`)
+
+The `useStreamingAnalysis` hook calls `streamAnalysis()` from `api.ts`, which reads the `fetch` response body as a `ReadableStream`, accumulates chunks into a buffer, and calls `onEvent` for each `data:` line. State fields (`technical`, `fundamental`, `sentimentData`, `result`) are set as events arrive. `isStreaming` clears on `complete` or `error`. A `restart()` function resets all state and re-opens the stream.
 
 ---
 
@@ -267,7 +308,7 @@ GitHub Actions (ci.yml)
               └── smoke-test job: poll describe-service until RUNNING
                     └── curl /api/v1/health → assert 200
 
-  backend job runs 282+ tests (fully mocked — no API keys required)
+  backend job runs 292+ tests (fully mocked — no API keys required)
 
 Amplify:
   GitHub push → Amplify webhook → npm ci + npm run build → SSR deploy

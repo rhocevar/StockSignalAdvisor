@@ -17,10 +17,12 @@ AI-powered stock analysis app that delivers **Strong Buy / Buy / Hold / Sell / S
 
 ## Features
 
+- **Progressive streaming** — analysis results stream to the browser via Server-Sent Events as each pillar completes; technical indicators, fundamentals, and news sources appear progressively instead of waiting for a single monolithic response
 - **Three-pillar analysis** — Technical (RSI, MACD, moving averages), Fundamental (P/E, margins, growth), and Sentiment (news headlines via LLM) are individually scored and weighted into a final recommendation
 - **LangChain ReAct agent** — a reasoning agent with 6 tools that autonomously gathers data, consults RAG context, and produces an explanation
 - **RAG-augmented analysis** — Pinecone vector store with 18 financial knowledge documents provides domain context for the agent's reasoning
 - **Real-time market data** — yfinance for price, technicals, and fundamentals; NewsAPI for headlines
+- **Intelligent news filtering** — LLM classifies each headline for relevance; consumer deals, sponsor mentions, and unrelated brand references are excluded from sentiment scoring and the sources list
 - **Provider abstraction** — swap OpenAI ↔ Anthropic and Pinecone ↔ Qdrant ↔ pgvector with a single config change
 - **TTL caching** — results cached for 1 hour to minimize API costs
 - **SSR frontend** — Next.js 14 App Router with server-side rendering, deployed on AWS Amplify
@@ -31,16 +33,16 @@ AI-powered stock analysis app that delivers **Strong Buy / Buy / Hold / Sell / S
 ```
 Browser
   └── AWS Amplify (Next.js 14 SSR)
-        └── POST /api/v1/signal
+        └── GET /api/v1/signal/stream (SSE)
               └── AWS App Runner (FastAPI)
                     └── StockAnalysisOrchestrator
-                          ├── Technical pillar  ──→ yfinance
-                          ├── Fundamental pillar ─→ yfinance
-                          ├── Sentiment pillar ──→ NewsAPI + OpenAI
+                          ├── Technical pillar  ──→ yfinance        → "technical" event
+                          ├── Fundamental pillar ─→ yfinance        → "fundamental" event
+                          ├── Sentiment pillar ──→ NewsAPI + OpenAI → "sentiment" event
                           └── LangChain Agent
                                 ├── 6 tools (price, technicals, fundamentals,
                                 │          news, sentiment, RAG search)
-                                └── Pinecone (RAG vector store)
+                                └── Pinecone (RAG vector store) → "complete" event
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full system design.
@@ -49,8 +51,9 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full system design.
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui, React Query |
+| **Frontend** | Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
 | **Backend** | FastAPI, Python 3.11+, Pydantic v2, asyncio |
+| **Streaming** | Server-Sent Events (SSE) via FastAPI `StreamingResponse` |
 | **AI / Agents** | LangChain, LangGraph, OpenAI GPT-4o-mini (swappable to Anthropic) |
 | **Vector Store** | Pinecone (swappable to Qdrant / pgvector) |
 | **Data Sources** | yfinance, NewsAPI |
@@ -143,6 +146,7 @@ See `.env.example` for the full template.
 |----------|--------|-------------|
 | `/api/v1/health` | GET | Service health + provider status |
 | `/api/v1/signal` | POST | Full stock analysis → Strong Buy/Buy/Hold/Sell/Strong Sell |
+| `/api/v1/signal/stream` | GET | Same analysis streamed as Server-Sent Events |
 | `/api/v1/tools/stock-price/{ticker}` | GET | Current price and 52-week range |
 | `/api/v1/tools/company-name/{ticker}` | GET | Company name lookup |
 | `/api/v1/tools/technicals/{ticker}` | GET | RSI, MACD, SMA indicators |
@@ -164,7 +168,7 @@ source venv/Scripts/activate   # Linux/Mac: source venv/bin/activate
 python -m pytest tests/ -v
 ```
 
-All 230+ tests are fully mocked — no API keys required.
+All 292 tests are fully mocked — no API keys required.
 
 ### Frontend (Jest)
 
@@ -196,7 +200,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#deployment-architecture) for the
 .github/workflows/   GitHub Actions CI/CD pipeline
 backend/
   app/
-    api/routes/      FastAPI route handlers (health, signal, tools)
+    api/routes/      FastAPI route handlers (health, signal + stream, tools)
     agents/          LangChain orchestrator + 6 analysis tools
     models/          Pydantic models (domain, request, response)
     providers/       Swappable LLM + vector store abstractions
@@ -206,15 +210,15 @@ backend/
     config.py        pydantic-settings (auto-loads .env)
     main.py          FastAPI entry point
   scripts/           seed_pinecone.py — index seed documents
-  tests/             230+ pytest unit tests (fully mocked)
+  tests/             292 pytest unit tests (fully mocked)
 bruno/               Bruno API test collections
 docs/                API.md, ARCHITECTURE.md, spec, progress tracker
 frontend/
   src/
     app/             Next.js App Router pages (home, analyze/[ticker])
     components/      UI components (SignalCard, PriceChart, etc.)
-    hooks/           useAnalysis React Query hook
-    lib/             API client
+    hooks/           useStreamingAnalysis SSE hook
+    lib/             API client (analyzeStock, streamAnalysis)
     types/           TypeScript interfaces
 scripts/             precache.py — cache warm-up for demo
 ```
