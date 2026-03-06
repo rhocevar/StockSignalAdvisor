@@ -13,7 +13,7 @@ from app.agents.agent import run_agent
 from app.agents.tools.fundamentals import calculate_fundamentals
 from app.agents.tools.news_fetcher import fetch_news_headlines
 from app.agents.tools.sentiment import analyze_sentiment
-from app.agents.tools.stock_data import get_company_name, get_stock_price, get_ticker
+from app.agents.tools.stock_data import get_company_name, get_stock_price, get_ticker, is_equity
 from app.agents.tools.technical import calculate_technicals
 from app.config import settings
 from app.models.domain import (
@@ -141,6 +141,9 @@ class StockAnalysisOrchestrator:
         # Resolve it synchronously so it can be passed to the news query for disambiguation
         # (e.g. ticker "PBR" → query '"Petrobras"' instead of just "PBR").
         company_name: str | None = get_company_name(stock)
+        # ETFs, mutual funds, and indices lack company-level fundamentals —
+        # skip the fundamental pillar to avoid a misleadingly low score.
+        include_fundamentals = request.include_fundamentals and is_equity(stock)
 
         tasks: dict[str, asyncio.Task] = {}
 
@@ -153,7 +156,7 @@ class StockAnalysisOrchestrator:
                 asyncio.to_thread(calculate_technicals, stock)
             )
 
-        if request.include_fundamentals:
+        if include_fundamentals:
             tasks["fundamentals"] = asyncio.create_task(
                 asyncio.to_thread(calculate_fundamentals, stock)
             )
@@ -263,6 +266,9 @@ class StockAnalysisOrchestrator:
         stock = await asyncio.to_thread(get_ticker, ticker)
         await asyncio.to_thread(lambda: stock.info)
         company_name: str | None = get_company_name(stock)
+        # ETFs, mutual funds, and indices lack company-level fundamentals —
+        # skip the fundamental pillar to avoid a misleadingly low score.
+        run_fundamentals = is_equity(stock)
 
         # 3. Start all tasks in parallel before processing any results
         price_task = asyncio.create_task(asyncio.to_thread(get_stock_price, stock))
@@ -270,11 +276,12 @@ class StockAnalysisOrchestrator:
             asyncio.to_thread(fetch_news_headlines, ticker, company_name)
         )
         tech_task = asyncio.create_task(_pillar("technical", calculate_technicals, stock))
-        fund_task = asyncio.create_task(_pillar("fundamental", calculate_fundamentals, stock))
+        fund_task = asyncio.create_task(_pillar("fundamental", calculate_fundamentals, stock)) if run_fundamentals else None
 
         # 4. Emit technical / fundamental as each completes (order is non-deterministic)
         pillar_results: dict[str, TechnicalAnalysis | FundamentalAnalysis | None] = {}
-        for fut in asyncio.as_completed([tech_task, fund_task]):
+        active_pillar_tasks = [t for t in [tech_task, fund_task] if t is not None]
+        for fut in asyncio.as_completed(active_pillar_tasks):
             result: PillarResult = await fut  # _pillar() swallows exceptions internally
             pillar_results[result.pillar] = result.data
             if result.data is not None:

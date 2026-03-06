@@ -84,7 +84,8 @@ def _patch_all(
     """Return a dict of patch context managers for all orchestrator dependencies."""
     return {
         "get_ticker": patch(
-            "app.agents.orchestrator.get_ticker", return_value=MagicMock()
+            "app.agents.orchestrator.get_ticker",
+            return_value=MagicMock(info={"quoteType": "EQUITY"}),
         ),
         "get_stock_price": patch(
             "app.agents.orchestrator.get_stock_price", return_value=price

@@ -84,3 +84,16 @@ def get_company_name(stock: yf.Ticker) -> str | None:
     if not info:
         return None
     return info.get("longName") or info.get("shortName")
+
+
+def is_equity(stock: yf.Ticker) -> bool:
+    """Return True only for regular equities (stocks).
+
+    ETFs, mutual funds, and indices share many yfinance fields with stocks but
+    lack company-level fundamentals (profit margins, ROE, revenue growth, etc.).
+    Applying the fundamental scoring model to them produces misleading scores
+    (e.g. VOO scores ~5% because only P/E is populated). The orchestrator uses
+    this to skip the fundamental pillar for non-equity instruments.
+    """
+    quote_type = (stock.info or {}).get("quoteType", "")
+    return quote_type == "EQUITY"
