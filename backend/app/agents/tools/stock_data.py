@@ -21,7 +21,7 @@ def get_stock_price(stock: yf.Ticker) -> PriceData:
         raise ValueError(f"No price data found for ticker: {stock.ticker}")
 
     current_price = info.get("regularMarketPrice") or info.get("currentPrice")
-    history = stock.history(period="1mo", timeout=_YF_TIMEOUT_SECONDS)
+    history = stock.history(period="5y", timeout=_YF_TIMEOUT_SECONDS)
 
     change_1d: float | None = None
     change_1w: float | None = None
@@ -32,20 +32,18 @@ def get_stock_price(stock: yf.Ticker) -> PriceData:
             prev_close = history["Close"].iloc[-2]
             change_1d = round((current_price - prev_close) / prev_close * 100, 2)
 
-        # Find the closest trading day to 7 calendar days ago
-        if len(history) >= 2:
-            target_date = datetime.now(timezone.utc) - timedelta(days=7)
-            # Ensure target_date matches the index timezone
+        def _change_vs_days_ago(days: int) -> float | None:
+            target_date = datetime.now(timezone.utc) - timedelta(days=days)
             if history.index.tz is None:
                 target_date = target_date.replace(tzinfo=None)
             idx = history.index.get_indexer([target_date], method="ffill")[0]
-            if idx >= 0:
-                week_ago = history["Close"].iloc[idx]
-                change_1w = round((current_price - week_ago) / week_ago * 100, 2)
+            if idx < 0:
+                return None
+            past_close = history["Close"].iloc[idx]
+            return round((current_price - past_close) / past_close * 100, 2)
 
-        if len(history) >= 1:
-            month_ago = history["Close"].iloc[0]
-            change_1m = round((current_price - month_ago) / month_ago * 100, 2)
+        change_1w = _change_vs_days_ago(7)
+        change_1m = _change_vs_days_ago(30)
 
     price_history: list[PricePoint] | None = None
     if not history.empty:

@@ -63,7 +63,7 @@ function PriceChartSkeleton() {
   return (
     <div className="rounded-xl border bg-card shadow p-6 space-y-3">
       <div className="h-5 w-32 bg-muted animate-pulse rounded" />
-      <div className="h-48 w-full bg-muted animate-pulse rounded-md" />
+      <div className="h-60 w-full bg-muted animate-pulse rounded-md" />
     </div>
   );
 }
