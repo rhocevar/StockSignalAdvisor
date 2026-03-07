@@ -122,6 +122,23 @@ class TestParseAgentOutput:
         result = _parse_agent_output(output)
         assert result.signal == SignalType.HOLD
 
+    def test_parses_json_wrapped_in_code_fence(self):
+        from app.agents.agent import _parse_agent_output
+
+        output = '```json\n{"signal": "SELL", "confidence": 0.35, "explanation": "Bearish."}\n```'
+        result = _parse_agent_output(output)
+        assert result.signal == SignalType.SELL
+        assert result.confidence == 0.35
+        assert result.explanation == "Bearish."
+
+    def test_parses_json_with_surrounding_prose(self):
+        from app.agents.agent import _parse_agent_output
+
+        output = 'Here is my analysis:\n{"signal": "BUY", "confidence": 0.70, "explanation": "Bullish."}\nEnd.'
+        result = _parse_agent_output(output)
+        assert result.signal == SignalType.BUY
+        assert result.confidence == 0.70
+
 
 class TestToolWrappers:
     @patch("app.agents.agent.get_stock_price")

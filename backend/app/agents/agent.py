@@ -8,6 +8,7 @@ produce a BUY/HOLD/SELL recommendation.
 import asyncio
 import json
 import logging
+import re
 
 from langchain.agents import create_agent
 from langchain_anthropic import ChatAnthropic
@@ -179,6 +180,13 @@ def _build_tools() -> list[Tool]:
     ]
 
 
+def _extract_json(text: str) -> str:
+    """Extract a JSON object from text, stripping markdown code fences if present."""
+    # Find the first { ... } block spanning the whole object
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    return match.group(0) if match else text
+
+
 def _parse_agent_output(output: str) -> AgentResult:
     """Parse the agent's final output into a structured AgentResult.
 
@@ -186,7 +194,7 @@ def _parse_agent_output(output: str) -> AgentResult:
     Falls back to HOLD/0.5 if parsing fails.
     """
     try:
-        parsed = json.loads(output, strict=False)
+        parsed = json.loads(_extract_json(output), strict=False)
         signal_str = parsed.get("signal", SignalType.HOLD.value).upper()
         try:
             signal = SignalType(signal_str)

@@ -51,7 +51,8 @@ data and provide clear, actionable recommendations.
 
 ## JSON Output Format
 
-Respond with valid JSON only:
+Your final response MUST be a raw JSON object — no prose, no markdown, no code fences.
+Output ONLY the JSON object, starting with `{` and ending with `}`:
 {
   "signal": "STRONG_BUY" | "BUY" | "HOLD" | "SELL" | "STRONG_SELL",
   "confidence": <float 0.0-1.0>,
