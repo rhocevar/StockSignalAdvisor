@@ -7,7 +7,7 @@ interface AnalyzePageProps {
 export default function AnalyzePage({ params }: AnalyzePageProps) {
   return (
     <main className="flex min-h-screen flex-col items-center pt-4 pb-16 font-[family-name:var(--font-geist-sans)]">
-      <AnalysisView ticker={params.ticker.toUpperCase()} />
+      <AnalysisView ticker={decodeURIComponent(params.ticker).toUpperCase()} />
     </main>
   );
 }

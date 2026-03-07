@@ -78,6 +78,48 @@ interface PriceChartProps {
   history: PricePoint[];
 }
 
+/**
+ * Compute a human-friendly Y-axis scale: rounded min/max and evenly-spaced
+ * ticks at magnitudes like 1/2/5 × 10^n (e.g. 20 000, 40 000, 60 000).
+ */
+function niceScale(dataMin: number, dataMax: number, targetTicks = 5) {
+  const range = dataMax - dataMin;
+  if (range === 0) {
+    return { min: dataMin - 1, max: dataMax + 1, step: 1, ticks: [dataMin] };
+  }
+  const roughStep = range / (targetTicks - 1);
+  const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const fraction = roughStep / magnitude;
+  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+  const step = niceFraction * magnitude;
+  const min = Math.floor(dataMin / step) * step;
+  const max = Math.ceil(dataMax / step) * step;
+  const ticks: number[] = [];
+  for (let t = min; t <= max + step * 0.001; t += step) {
+    ticks.push(Math.round(t * 1e6) / 1e6); // floating-point guard
+  }
+  return { min, max, step, ticks };
+}
+
+/** Build a Y-axis tick formatter whose decimal precision matches the step size. */
+function makeYTickFormatter(step: number) {
+  // Number of decimal places needed: 0 for integers, otherwise derived from step magnitude
+  const decimals = step >= 1 ? 0 : Math.ceil(-Math.log10(step));
+
+  return (v: number): string => {
+    if (v >= 1_000_000) {
+      const d = step >= 100_000 ? 0 : 1;
+      return `$${parseFloat((v / 1_000_000).toFixed(d))}M`;
+    }
+    if (v >= 1_000) {
+      // Decimal places for the K value: 1 when step is sub-thousand (e.g. 500 → 5.5K), else 0
+      const kd = step >= 1_000 ? 0 : 1;
+      return `$${parseFloat((v / 1_000).toFixed(kd))}K`;
+    }
+    return `$${v.toFixed(decimals)}`;
+  };
+}
+
 function makeAxisTickFormatter(candles: PricePoint[]) {
   const years = new Set(candles.map((c) => c.date.slice(0, 4)));
   const multiYear = years.size > 1;
@@ -196,14 +238,9 @@ export function PriceChart({ history }: PriceChartProps) {
   // Show every ~5th label to avoid crowding
   const tickInterval = Math.max(1, Math.floor(candles.length / 5));
 
-  // Y-axis domain spans full high/low range with small padding
-  const allHighs = candles.map((p) => p.high);
-  const allLows = candles.map((p) => p.low);
-  const rangeHigh = Math.max(...allHighs);
-  const rangeLow = Math.min(...allLows);
-  const padding = (rangeHigh - rangeLow) * 0.05 || 1;
-  const yMin = Math.floor(rangeLow - padding);
-  const yMax = Math.ceil(rangeHigh + padding);
+  const rangeHigh = Math.max(...candles.map((p) => p.high));
+  const rangeLow = Math.min(...candles.map((p) => p.low));
+  const { min: yMin, max: yMax, step: yStep, ticks: yTicks } = niceScale(rangeLow, rangeHigh);
 
   return (
     <Card>
@@ -244,7 +281,8 @@ export function PriceChart({ history }: PriceChartProps) {
             />
             <YAxis
               domain={[yMin, yMax]}
-              tickFormatter={(v: number) => `$${v.toFixed(0)}`}
+              ticks={yTicks}
+              tickFormatter={makeYTickFormatter(yStep)}
               tick={{ fontSize: 11 }}
               tickLine={false}
               axisLine={false}

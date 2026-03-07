@@ -13,17 +13,17 @@ export function SearchHeader() {
   const [isPending, startTransition] = useTransition();
 
   const currentTicker =
-    pathname.split("/analyze/")[1]?.toUpperCase() ?? "";
+    decodeURIComponent(pathname.split("/analyze/")[1] ?? "").toUpperCase();
 
   const [ticker, setTicker] = useState(currentTicker);
 
   // Re-sync when the user navigates to a different ticker via this header
   useEffect(() => {
-    setTicker(pathname.split("/analyze/")[1]?.toUpperCase() ?? "");
+    setTicker(decodeURIComponent(pathname.split("/analyze/")[1] ?? "").toUpperCase());
   }, [pathname]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9.]/g, "");
+    const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9.^=-]/g, "");
     setTicker(raw);
   }
 
@@ -55,7 +55,7 @@ export function SearchHeader() {
             value={ticker}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            maxLength={10}
+            maxLength={12}
             aria-label="Stock ticker symbol"
             className="w-28 sm:w-40 font-mono text-sm tracking-widest uppercase"
           />

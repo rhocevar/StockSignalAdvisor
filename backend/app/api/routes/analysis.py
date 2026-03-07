@@ -58,7 +58,7 @@ async def analyze_stock(request: Request, body: AnalyzeRequest) -> AnalyzeRespon
 @router.get("/signal/stream")
 async def stream_signal(
     request: Request,
-    ticker: str = Query(..., min_length=1, max_length=10),
+    ticker: str = Query(..., min_length=1, max_length=12),
 ) -> StreamingResponse:
     """Stream analysis results as Server-Sent Events.
 

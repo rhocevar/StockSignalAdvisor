@@ -12,7 +12,7 @@ export function TickerInput() {
   const router = useRouter();
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9.]/g, "");
+    const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9.^=-]/g, "");
     setTicker(raw);
   }
 
@@ -38,7 +38,7 @@ export function TickerInput() {
         value={ticker}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        maxLength={10}
+        maxLength={12}
         aria-label="Stock ticker symbol"
         className="font-mono text-base tracking-widest uppercase"
       />

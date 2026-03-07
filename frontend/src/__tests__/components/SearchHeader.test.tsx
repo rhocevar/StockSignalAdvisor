@@ -41,7 +41,7 @@ describe("SearchHeader", () => {
     expect(screen.getByRole("textbox")).toHaveValue("");
   });
 
-  it("filters non-alphanumeric characters and uppercases input", async () => {
+  it("filters disallowed characters and uppercases input", async () => {
     const user = userEvent.setup();
     mockPathname = "/analyze/";
     render(<SearchHeader />);
@@ -49,6 +49,16 @@ describe("SearchHeader", () => {
     await user.clear(input);
     await user.type(input, "msft!@#");
     expect(input).toHaveValue("MSFT");
+  });
+
+  it("allows dash, caret, and equals in ticker symbols", async () => {
+    const user = userEvent.setup();
+    mockPathname = "/analyze/";
+    render(<SearchHeader />);
+    const input = screen.getByRole("textbox");
+    await user.clear(input);
+    await user.type(input, "btc-usd");
+    expect(input).toHaveValue("BTC-USD");
   });
 
   it("disables the Analyze button when input is empty", () => {

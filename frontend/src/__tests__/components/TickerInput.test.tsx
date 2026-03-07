@@ -19,12 +19,20 @@ describe("TickerInput", () => {
     expect(screen.getByRole("button", { name: /analyze/i })).toBeInTheDocument();
   });
 
-  it("filters non-alphanumeric characters and uppercases input", async () => {
+  it("filters disallowed characters and uppercases input", async () => {
     const user = userEvent.setup();
     render(<TickerInput />);
     const input = screen.getByRole("textbox");
     await user.type(input, "aapl!@#");
     expect(input).toHaveValue("AAPL");
+  });
+
+  it("allows dash, caret, and equals in ticker symbols", async () => {
+    const user = userEvent.setup();
+    render(<TickerInput />);
+    const input = screen.getByRole("textbox");
+    await user.type(input, "btc-usd");
+    expect(input).toHaveValue("BTC-USD");
   });
 
   it("disables the Analyze button when input is empty", () => {
@@ -38,6 +46,14 @@ describe("TickerInput", () => {
     await user.type(screen.getByRole("textbox"), "AAPL");
     await user.click(screen.getByRole("button", { name: /analyze/i }));
     expect(mockPush).toHaveBeenCalledWith("/analyze/AAPL");
+  });
+
+  it("URL-encodes special characters when navigating", async () => {
+    const user = userEvent.setup();
+    render(<TickerInput />);
+    await user.type(screen.getByRole("textbox"), "BTC-USD");
+    await user.click(screen.getByRole("button", { name: /analyze/i }));
+    expect(mockPush).toHaveBeenCalledWith("/analyze/BTC-USD");
   });
 
   it("navigates on Enter key press", async () => {
