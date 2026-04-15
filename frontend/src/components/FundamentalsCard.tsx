@@ -76,10 +76,10 @@ export function FundamentalsCard({ data }: FundamentalsCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Fundamental Analysis</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base min-w-0 truncate">Fundamental Analysis</CardTitle>
           {scorePct !== null && (
-            <span className="text-sm text-muted-foreground">Bullishness Score ({scorePct}%)</span>
+            <span className="text-sm text-muted-foreground shrink-0">Bullishness Score ({scorePct}%)</span>
           )}
         </div>
         {score !== null && <ScoreBar score={score} />}
@@ -97,7 +97,7 @@ export function FundamentalsCard({ data }: FundamentalsCardProps) {
           </ul>
         )}
 
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+        <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3">
           {/* Valuation */}
           <Section title="Valuation">
             <MetricRow label="P/E" value={data.pe_ratio} formatter={ratio} />

@@ -78,39 +78,39 @@ export function SignalCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 sm:gap-6">
           {/* Confidence */}
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+          <div className="shrink-0">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
               Confidence
             </p>
-            <p className="text-2xl font-semibold">
+            <p className="text-xl sm:text-2xl font-semibold">
               {(confidence * 100).toFixed(1)}%
             </p>
           </div>
 
           {priceData && (
             <>
-              <div className="h-10 w-px bg-border" />
+              <div className="h-10 w-px bg-border shrink-0" />
 
               {/* Current price */}
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                   Price
                 </p>
-                <p className="text-2xl font-semibold">
+                <p className="text-xl sm:text-2xl font-semibold tabular-nums truncate">
                   {formatPrice(priceData.current, priceData.currency)}
                 </p>
               </div>
 
               {/* 1d change */}
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="shrink-0">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                   1D Change
                 </p>
                 <p
                   className={cn(
-                    "text-lg font-medium",
+                    "text-base sm:text-lg font-medium tabular-nums",
                     change1d === null
                       ? "text-muted-foreground"
                       : isPositiveChange

@@ -51,16 +51,16 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Technical Analysis</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base min-w-0 truncate">Technical Analysis</CardTitle>
           {scorePct !== null && (
-            <span className="text-sm text-muted-foreground">Bullishness Score ({scorePct}%)</span>
+            <span className="text-sm text-muted-foreground shrink-0">Bullishness Score ({scorePct}%)</span>
           )}
         </div>
         {score !== null && <ScoreBar score={score} />}
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+        <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3">
           {data.rsi !== null && (
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">RSI</span>
