@@ -181,10 +181,17 @@ def _build_tools() -> list[Tool]:
 
 
 def _extract_json(text: str) -> str:
-    """Extract a JSON object from text, stripping markdown code fences if present."""
-    # Find the first { ... } block spanning the whole object
+    """Extract a JSON object from text, handling code fences and a missing opening brace."""
+    text = text.strip()
+    # Standard: find first { ... last }
     match = re.search(r"\{.*\}", text, re.DOTALL)
-    return match.group(0) if match else text
+    if match:
+        return match.group(0)
+    # Handle LLM omitting the opening brace — text starts like a JSON object body
+    if re.match(r'"[^"]+"\s*:', text):
+        body = text if text.endswith("}") else text + "}"
+        return "{" + body
+    return text
 
 
 def _parse_agent_output(output: str) -> AgentResult:
@@ -204,7 +211,7 @@ def _parse_agent_output(output: str) -> AgentResult:
         confidence = float(parsed.get("confidence", 0.5))
         confidence = max(0.0, min(1.0, confidence))
 
-        explanation = parsed.get("explanation", output)
+        explanation = parsed.get("explanation") or ""
 
         return AgentResult(
             signal=signal,

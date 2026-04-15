@@ -4,6 +4,16 @@ interface ExplanationPanelProps {
   explanation: string;
 }
 
+/** Guard against raw JSON reaching the UI if backend parsing fails. */
+function safeExplanation(text: string): string {
+  if (!/"signal"\s*:/.test(text)) return text;
+  try {
+    const obj = JSON.parse(text.startsWith("{") ? text : "{" + text);
+    if (typeof obj?.explanation === "string") return obj.explanation;
+  } catch { /* fall through */ }
+  return text;
+}
+
 export function ExplanationPanel({ explanation }: ExplanationPanelProps) {
   return (
     <Card>
@@ -12,7 +22,7 @@ export function ExplanationPanel({ explanation }: ExplanationPanelProps) {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-          {explanation}
+          {safeExplanation(explanation)}
         </p>
       </CardContent>
     </Card>

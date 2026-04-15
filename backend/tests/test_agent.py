@@ -139,6 +139,25 @@ class TestParseAgentOutput:
         assert result.signal == SignalType.BUY
         assert result.confidence == 0.70
 
+    def test_parses_json_missing_opening_brace(self):
+        from app.agents.agent import _parse_agent_output
+
+        # LLM omits the opening { — body + closing }
+        output = '"signal": "HOLD", "confidence": 0.56, "explanation": "Mixed outlook."}'
+        result = _parse_agent_output(output)
+        assert result.signal == SignalType.HOLD
+        assert result.confidence == 0.56
+        assert result.explanation == "Mixed outlook."
+
+    def test_missing_explanation_key_returns_empty_string(self):
+        from app.agents.agent import _parse_agent_output
+
+        # Valid JSON but no explanation key — should not fall back to raw JSON
+        output = json.dumps({"signal": "BUY", "confidence": 0.75})
+        result = _parse_agent_output(output)
+        assert result.signal == SignalType.BUY
+        assert result.explanation == ""
+
 
 class TestToolWrappers:
     @patch("app.agents.agent.get_stock_price")
