@@ -52,8 +52,8 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base min-w-0 truncate">Technical Analysis</CardTitle>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-base">Technical Analysis</CardTitle>
           {scorePct !== null && (
             <span className="text-sm text-muted-foreground shrink-0 flex items-center">
               Bullishness Score ({scorePct}%)
@@ -66,10 +66,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
       <CardContent>
         <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3">
           {data.rsi !== null && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground flex items-center">
+            <div className="flex items-start justify-between gap-1">
+              <span className="text-sm text-muted-foreground flex items-center min-w-0">
                 RSI
-                <InfoTooltip content="Relative Strength Index (14-day). Below 30 = oversold (bullish signal). Above 70 = overbought (bearish signal). 30–70 = neutral." />
+                <span className="hidden sm:inline-flex"><InfoTooltip content="Relative Strength Index (14-day). Below 30 = oversold (bullish signal). Above 70 = overbought (bearish signal). 30–70 = neutral." /></span>
               </span>
               <span className={cn("text-sm font-medium", rsiColor(data.rsi))}>
                 {data.rsi.toFixed(1)}
@@ -83,10 +83,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
           )}
 
           {data.macd_signal !== null && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground flex items-center">
+            <div className="flex items-start justify-between gap-1">
+              <span className="text-sm text-muted-foreground flex items-center min-w-0">
                 MACD
-                <InfoTooltip content="Moving Average Convergence Divergence. Bullish when the MACD line crosses above its signal line, indicating upward momentum." />
+                <span className="hidden sm:inline-flex"><InfoTooltip content="Moving Average Convergence Divergence. Bullish when the MACD line crosses above its signal line, indicating upward momentum." /></span>
               </span>
               <span
                 className={cn(
@@ -100,10 +100,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
           )}
 
           {data.price_vs_sma50 !== null && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground flex items-center">
+            <div className="flex items-start justify-between gap-1">
+              <span className="text-sm text-muted-foreground flex items-center min-w-0">
                 vs SMA 50
-                <InfoTooltip content="Price position relative to the 50-day Simple Moving Average. Trading above is a short-term bullish signal." />
+                <span className="hidden sm:inline-flex"><InfoTooltip content="Price position relative to the 50-day Simple Moving Average. Trading above is a short-term bullish signal." /></span>
               </span>
               <span
                 className={cn(
@@ -117,10 +117,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
           )}
 
           {data.price_vs_sma200 !== null && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground flex items-center">
+            <div className="flex items-start justify-between gap-1">
+              <span className="text-sm text-muted-foreground flex items-center min-w-0">
                 vs SMA 200
-                <InfoTooltip content="Price position relative to the 200-day Simple Moving Average. Trading above is a long-term bullish signal." />
+                <span className="hidden sm:inline-flex"><InfoTooltip content="Price position relative to the 200-day Simple Moving Average. Trading above is a long-term bullish signal." /></span>
               </span>
               <span
                 className={cn(
@@ -134,10 +134,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
           )}
 
           {data.volume_trend !== null && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground flex items-center">
+            <div className="flex items-start justify-between gap-1">
+              <span className="text-sm text-muted-foreground flex items-center min-w-0">
                 Volume
-                <InfoTooltip content="Recent trading volume relative to the 20-day average. High volume confirms price moves; low volume suggests weak conviction." />
+                <span className="hidden sm:inline-flex"><InfoTooltip content="Recent trading volume relative to the 20-day average. High volume confirms price moves; low volume suggests weak conviction." /></span>
               </span>
               <span
                 className={cn(

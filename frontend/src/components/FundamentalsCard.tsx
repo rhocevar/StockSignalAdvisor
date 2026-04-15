@@ -85,8 +85,8 @@ export function FundamentalsCard({ data }: FundamentalsCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base min-w-0 truncate">Fundamental Analysis</CardTitle>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-base">Fundamental Analysis</CardTitle>
           {scorePct !== null && (
             <span className="text-sm text-muted-foreground shrink-0 flex items-center">
               Bullishness Score ({scorePct}%)
