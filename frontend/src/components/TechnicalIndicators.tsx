@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/InfoTooltip";
 import { cn } from "@/lib/utils";
 import type { TechnicalAnalysis, MacdSignal, TrendDirection, VolumeTrend } from "@/types";
 
@@ -54,7 +55,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base min-w-0 truncate">Technical Analysis</CardTitle>
           {scorePct !== null && (
-            <span className="text-sm text-muted-foreground shrink-0">Bullishness Score ({scorePct}%)</span>
+            <span className="text-sm text-muted-foreground shrink-0 flex items-center">
+              Bullishness Score ({scorePct}%)
+              <InfoTooltip content="Composite 0–100% score of technical momentum. ≥60% is bullish, ≤40% is bearish. Derived from RSI, MACD, moving averages, and volume." />
+            </span>
           )}
         </div>
         {score !== null && <ScoreBar score={score} />}
@@ -63,7 +67,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
         <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3">
           {data.rsi !== null && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">RSI</span>
+              <span className="text-sm text-muted-foreground flex items-center">
+                RSI
+                <InfoTooltip content="Relative Strength Index (14-day). Below 30 = oversold (bullish signal). Above 70 = overbought (bearish signal). 30–70 = neutral." />
+              </span>
               <span className={cn("text-sm font-medium", rsiColor(data.rsi))}>
                 {data.rsi.toFixed(1)}
                 {data.rsi_interpretation && (
@@ -77,7 +84,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
 
           {data.macd_signal !== null && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">MACD</span>
+              <span className="text-sm text-muted-foreground flex items-center">
+                MACD
+                <InfoTooltip content="Moving Average Convergence Divergence. Bullish when the MACD line crosses above its signal line, indicating upward momentum." />
+              </span>
               <span
                 className={cn(
                   "inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium",
@@ -91,7 +101,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
 
           {data.price_vs_sma50 !== null && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">vs SMA 50</span>
+              <span className="text-sm text-muted-foreground flex items-center">
+                vs SMA 50
+                <InfoTooltip content="Price position relative to the 50-day Simple Moving Average. Trading above is a short-term bullish signal." />
+              </span>
               <span
                 className={cn(
                   "inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium",
@@ -105,7 +118,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
 
           {data.price_vs_sma200 !== null && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">vs SMA 200</span>
+              <span className="text-sm text-muted-foreground flex items-center">
+                vs SMA 200
+                <InfoTooltip content="Price position relative to the 200-day Simple Moving Average. Trading above is a long-term bullish signal." />
+              </span>
               <span
                 className={cn(
                   "inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium",
@@ -119,7 +135,10 @@ export function TechnicalIndicators({ data }: TechnicalIndicatorsProps) {
 
           {data.volume_trend !== null && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Volume</span>
+              <span className="text-sm text-muted-foreground flex items-center">
+                Volume
+                <InfoTooltip content="Recent trading volume relative to the 20-day average. High volume confirms price moves; low volume suggests weak conviction." />
+              </span>
               <span
                 className={cn(
                   "inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium",

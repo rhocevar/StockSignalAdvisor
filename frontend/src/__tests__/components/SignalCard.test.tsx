@@ -1,4 +1,4 @@
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act } from "../../test-utils";
 import userEvent from "@testing-library/user-event";
 import { SignalCard } from "../../components/SignalCard";
 

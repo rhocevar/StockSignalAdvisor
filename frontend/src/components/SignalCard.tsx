@@ -5,8 +5,17 @@ import { Copy, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SignalBadge } from "@/components/SignalBadge";
+import { InfoTooltip } from "@/components/InfoTooltip";
 import { cn } from "@/lib/utils";
 import type { PriceData, SignalType } from "@/types";
+
+const SIGNAL_TOOLTIPS: Record<string, string> = {
+  STRONG_BUY:  "Overwhelming bullish conviction across technical, fundamental, and sentiment pillars. Highest confidence in upward movement.",
+  BUY:         "Clear bullish signals across most pillars. Good risk/reward for entering or adding to a position.",
+  HOLD:        "Mixed or insufficient signals. Neither a compelling buy nor a sell — maintain current position and monitor.",
+  SELL:        "Clear bearish signals across most pillars. Consider reducing exposure.",
+  STRONG_SELL: "Overwhelming bearish conviction. Deteriorating fundamentals, poor technicals, and negative sentiment all align.",
+};
 
 interface SignalCardProps {
   ticker: string;
@@ -73,7 +82,10 @@ export function SignalCard({
                 <Copy className="h-3.5 w-3.5" />
               )}
             </Button>
-            <SignalBadge signal={signal} />
+            <div className="flex items-center gap-1">
+              <SignalBadge signal={signal} />
+              <InfoTooltip content={SIGNAL_TOOLTIPS[signal] ?? "AI-generated trading signal based on technical, fundamental, and sentiment analysis."} />
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -83,6 +95,7 @@ export function SignalCard({
           <div className="shrink-0">
             <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
               Confidence
+              <InfoTooltip content="How strongly the AI's conviction aligns with this signal. Combines agreement across the technical, fundamental, and sentiment pillars — higher means more consistent evidence." />
             </p>
             <p className="text-xl sm:text-2xl font-semibold">
               {(confidence * 100).toFixed(1)}%
