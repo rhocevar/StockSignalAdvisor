@@ -8,10 +8,10 @@ interface SourcesListProps {
 }
 
 const sentimentStyles: Record<SentimentType, string> = {
-  positive: "border-green-200 bg-green-50 text-green-700",
-  negative: "border-red-200 bg-red-50 text-red-700",
-  neutral: "border-gray-200 bg-gray-50 text-gray-600",
-  mixed: "border-amber-200 bg-amber-50 text-amber-700",
+  positive: "border-green-200 bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800",
+  negative: "border-red-200 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800",
+  neutral: "border-gray-200 bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+  mixed: "border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
 };
 
 function formatDate(dateStr: string | null): string {

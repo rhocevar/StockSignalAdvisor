@@ -155,12 +155,12 @@ export function AnalysisView({ ticker }: AnalysisViewProps) {
   if (error) {
     return (
       <div className="w-full max-w-2xl mx-auto p-8">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center space-y-4">
-          <p className="text-sm font-medium text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center space-y-4 dark:border-red-800 dark:bg-red-950/40">
+          <p className="text-sm font-medium text-red-700 dark:text-red-400">
             Analysis failed for{" "}
             <span className="font-mono font-bold">{ticker}</span>
           </p>
-          <p className="text-xs text-red-600">{error}</p>
+          <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
           <Button variant="outline" size="sm" onClick={restart}>
             Try Again
           </Button>

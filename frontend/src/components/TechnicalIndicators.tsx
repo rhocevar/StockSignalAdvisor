@@ -22,21 +22,21 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 function macdBadgeVariant(signal: MacdSignal): string {
-  if (signal === "bullish") return "bg-green-100 text-green-800 border-green-200";
-  if (signal === "bearish") return "bg-red-100 text-red-800 border-red-200";
-  return "bg-gray-100 text-gray-700 border-gray-200";
+  if (signal === "bullish") return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700";
+  if (signal === "bearish") return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700";
+  return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
 }
 
 function trendBadgeVariant(trend: TrendDirection): string {
   return trend === "above"
-    ? "bg-green-100 text-green-800 border-green-200"
-    : "bg-red-100 text-red-800 border-red-200";
+    ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700"
+    : "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700";
 }
 
 function volumeBadgeVariant(trend: VolumeTrend): string {
-  if (trend === "high") return "bg-green-100 text-green-800 border-green-200";
-  if (trend === "low") return "bg-amber-100 text-amber-800 border-amber-200";
-  return "bg-gray-100 text-gray-700 border-gray-200";
+  if (trend === "high") return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700";
+  if (trend === "low") return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700";
+  return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
 }
 
 function rsiColor(rsi: number): string {

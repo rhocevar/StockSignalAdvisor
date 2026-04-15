@@ -3,7 +3,8 @@
 import { useState, useEffect, useTransition, type KeyboardEvent } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +17,7 @@ export function SearchHeader() {
     decodeURIComponent(pathname.split("/analyze/")[1] ?? "").toUpperCase();
 
   const [ticker, setTicker] = useState(currentTicker);
+  const { resolvedTheme, setTheme } = useTheme();
 
   // Re-sync when the user navigates to a different ticker via this header
   useEffect(() => {
@@ -49,6 +51,16 @@ export function SearchHeader() {
           Stock Signal Advisor
         </Link>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            aria-label="Toggle theme"
+            className="h-8 w-8 shrink-0"
+          >
+            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          </Button>
           <Input
             type="text"
             placeholder="Ticker..."
