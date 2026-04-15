@@ -48,12 +48,12 @@ interface MetricRowProps {
 function MetricRow({ label, value, formatter, tooltip }: MetricRowProps) {
   if (value === null) return null;
   return (
-    <div className="flex items-center justify-between py-0.5">
-      <span className="text-sm text-muted-foreground flex items-center">
+    <div className="flex items-start justify-between py-0.5 gap-1">
+      <span className="text-sm text-muted-foreground flex items-center min-w-0">
         {label}
         {tooltip && <InfoTooltip content={tooltip} />}
       </span>
-      <span className="text-sm font-medium">{formatter(value)}</span>
+      <span className="text-sm font-medium shrink-0">{formatter(value)}</span>
     </div>
   );
 }

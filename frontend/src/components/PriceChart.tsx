@@ -245,7 +245,7 @@ export function PriceChart({ history }: PriceChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-base">Price History</CardTitle>
           <div className="flex gap-1">
             {PERIOD_CONFIG.map(({ period: p }) => (

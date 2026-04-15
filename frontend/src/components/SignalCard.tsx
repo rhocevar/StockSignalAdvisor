@@ -111,7 +111,7 @@ export function SignalCard({
                 <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                   Price
                 </p>
-                <p className="text-xl sm:text-2xl font-semibold tabular-nums truncate">
+                <p className="text-xl sm:text-2xl font-semibold tabular-nums">
                   {formatPrice(priceData.current, priceData.currency)}
                 </p>
               </div>
