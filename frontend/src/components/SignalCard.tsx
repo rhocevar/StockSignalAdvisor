@@ -90,7 +90,7 @@ export function SignalCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-3 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-6">
           {/* Confidence */}
           <div className="shrink-0">
             <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
@@ -107,11 +107,11 @@ export function SignalCard({
               <div className="h-10 w-px bg-border shrink-0" />
 
               {/* Current price */}
-              <div className="min-w-0">
+              <div className="shrink-0">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                   Price
                 </p>
-                <p className="text-xl sm:text-2xl font-semibold tabular-nums">
+                <p className="text-lg sm:text-2xl font-semibold tabular-nums whitespace-nowrap">
                   {formatPrice(priceData.current, priceData.currency)}
                 </p>
               </div>

@@ -51,7 +51,11 @@ function MetricRow({ label, value, formatter, tooltip }: MetricRowProps) {
     <div className="flex items-start justify-between py-0.5 gap-1">
       <span className="text-sm text-muted-foreground flex items-center min-w-0">
         {label}
-        {tooltip && <InfoTooltip content={tooltip} />}
+        {tooltip && (
+          <span className="hidden sm:inline-flex">
+            <InfoTooltip content={tooltip} />
+          </span>
+        )}
       </span>
       <span className="text-sm font-medium shrink-0">{formatter(value)}</span>
     </div>

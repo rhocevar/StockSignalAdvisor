@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Info } from "lucide-react";
 import {
   Tooltip,
@@ -10,10 +13,17 @@ interface InfoTooltipProps {
 }
 
 export function InfoTooltip({ content }: InfoTooltipProps) {
+  const [open, setOpen] = useState(false);
   return (
-    <Tooltip>
+    <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger asChild>
-        <span className="inline-flex items-center cursor-help ml-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+        <span
+          className="inline-flex items-center cursor-help ml-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
+        >
           <Info className="h-3 w-3" />
         </span>
       </TooltipTrigger>
